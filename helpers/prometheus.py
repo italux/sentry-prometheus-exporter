@@ -319,7 +319,15 @@ class SentryCollector(object):
                             str(
                                 datetime.strftime(
                                     datetime.strptime(
-                                        str(issue.get("lastSeen")), "%Y-%m-%dT%H:%M:%SZ"
+                                        str(
+                                            issue.get("lastSeen")
+                                            # if the issue age is recent, lastSeen returns None
+                                            # and we'll return datetime.now() as default
+                                            or datetime.strftime(
+                                                datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
+                                            )
+                                        ),
+                                        "%Y-%m-%dT%H:%M:%SZ",
                                     ),
                                     "%Y-%m-%d",
                                 )

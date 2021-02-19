@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  prometheus:
+    container_name: "prometheus"
+    image: "prom/prometheus"
+    ports:
+      - "9090:9090"
+    volumes:
+      - "./sample/prometheus.yml:/etc/prometheus/prometheus.yml"
+  grafana:
+    container_name: "grafana"
+    image: "grafana/grafana"
+    ports:
+      - "3000:3000"
+  sentry-exporter:
+    container_name: "sentry-prometheus-exporter"
+    build:
+      context: .
+    image: sentry-prometheus-exporter:latest
+    ports:
+      - "9790:9790"
+    env_file: .env
