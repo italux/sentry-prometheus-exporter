@@ -1,6 +1,6 @@
 # Welcome to Sentry Prometheus Exporter 👋
-![Version](https://img.shields.io/badge/version-v0.1-blue.svg?cacheSeconds=2592000)
-[![License: GNU General Public License v2.0](https://img.shields.io/badge/License-GNU%20General%20Public%20License%20v2.0-yellow.svg)](https://github.com/italux/sentry-prometheus-exporter/blob/master/LICENSE)
+![Version](https://img.shields.io/github/v/tag/italux/sentry-prometheus-exporter)
+[![License: GNU General Public License v2.0](https://img.shields.io/github/license/italux/sentry-prometheus-exporter)](https://github.com/italux/sentry-prometheus-exporter/blob/master/LICENSE)
 ![Dockehub Build](https://img.shields.io/docker/cloud/automated/italux/sentry-prometheus-exporter)
 ![Dockehub build status](https://img.shields.io/docker/cloud/build/italux/sentry-prometheus-exporter)
 
