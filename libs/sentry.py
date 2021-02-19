@@ -5,7 +5,7 @@ import requests
 
 
 class SentryAPI(object):
-    """A simples :class:`SentryAPI <SentryAPI>` to interact with Sentry's Web API.
+    """A simple :class:`SentryAPI <SentryAPI>` to interact with Sentry's Web API.
 
     Used to interact with Sentry's API to do basic list operations
 
