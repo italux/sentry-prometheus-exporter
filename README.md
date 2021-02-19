@@ -62,4 +62,4 @@ Copyright © 2021 [Italo Santos](https://github.com/italux).
 This project is [GNU General Public License v2.0](https://github.com/italux/sentry-prometheus-exporter/blob/master/LICENSE) licensed.
 
 ***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+_This README was generated with by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
