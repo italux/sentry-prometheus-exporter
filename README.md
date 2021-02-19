@@ -1,7 +1,8 @@
 # Welcome to Sentry Prometheus Exporter 👋
 ![Version](https://img.shields.io/badge/version-v0.1-blue.svg?cacheSeconds=2592000)
 [![License: GNU General Public License v2.0](https://img.shields.io/badge/License-GNU%20General%20Public%20License%20v2.0-yellow.svg)](https://github.com/italux/sentry-prometheus-exporter/blob/master/LICENSE)
-[![Twitter: italux](https://img.shields.io/twitter/follow/italux.svg?style=social)](https://twitter.com/italux)
+![Dockehub Build](https://img.shields.io/docker/cloud/automated/italux/sentry-prometheus-exporter)
+![Dockehub build status](https://img.shields.io/docker/cloud/build/italux/sentry-prometheus-exporter)
 
 > Export sentry project's metrics consistent with the Prometheus exposition formats
 
@@ -35,6 +36,10 @@ docker-compose build
 docker-compose up -d
 ```
 
+## 📒 Documentation
+
+https://italux.github.io/sentry-prometheus-exporter/
+
 ## Author
 
 👤 **Italo Santos**
@@ -48,7 +53,8 @@ docker-compose up -d
 
 Contributions, issues and feature requests are welcome!
 
-Feel free to check [issues page](https://github.com/italux/sentry-prometheus-exporter/issues). 
+- Please check the [Contributing Guide](https://github.com/italux/sentry-prometheus-exporter/blob/master/CONTRIBUTING.md)
+- Feel free to check [issues page](https://github.com/italux/sentry-prometheus-exporter/issues). 
 
 ## Show your support
 
