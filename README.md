@@ -25,6 +25,8 @@
 ### Prerequisites
 
 - python >= 3.7.9
+- Sentry API [auth token](https://docs.sentry.io/api/auth/#auth-tokens)
+    > Authentication token permissions: `project:read` `org:read` `project:releases` `event:read`
 
 ### Install
 ```sh
@@ -42,10 +44,17 @@ python exporter.py
 ```
 
 ### Docker
-
+**Build local image**
 ```sh
 docker-compose build
 ```
+**Create a `.env` file**
+```sh
+echo SENTRY_BASE_URL="https://sentry.io/api/0/"
+echo SENTRY_AUTH_TOKEN="[REPLACE_TOKEN]"
+echo SENTRY_EXPORTER_ORG="[organization_slug]"
+```
+**Start containers**
 ```sh
 docker-compose up -d
 ```
@@ -64,7 +73,7 @@ docker-compose up -d
 
 ## 📒 Documentation
 
-https://italux.github.io/sentry-prometheus-exporter/
+[Sentry Promethesu Exporter documentation](https://italux.github.io/sentry-prometheus-exporter/)
 
 ## 🤝 Contributing
 
