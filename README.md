@@ -79,7 +79,7 @@ docker-compose up -d
 
 Contributions, issues and feature requests are welcome!
 
-- Please check the [Contributing Guide](https://github.com/italux/sentry-prometheus-exporter/blob/master/CONTRIBUTING.md)
+- Please check the [Contributing Guide](CONTRIBUTING.md)
 - Feel free to check [issues page](https://github.com/italux/sentry-prometheus-exporter/issues). 
 
 
