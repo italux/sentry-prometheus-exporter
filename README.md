@@ -1,24 +1,24 @@
 # Welcome to Sentry Prometheus Exporter 👋
-![Version](https://img.shields.io/github/v/tag/italux/sentry-prometheus-exporter)
 [![License: GNU General Public License v2.0](https://img.shields.io/github/license/italux/sentry-prometheus-exporter)](https://github.com/italux/sentry-prometheus-exporter/blob/master/LICENSE)
 ![Dockehub Build](https://img.shields.io/docker/cloud/automated/italux/sentry-prometheus-exporter)
 ![Dockehub build status](https://img.shields.io/docker/cloud/build/italux/sentry-prometheus-exporter)
+![Version](https://img.shields.io/github/v/tag/italux/sentry-prometheus-exporter)
 
 > Export sentry project's metrics consistent with the Prometheus exposition formats
 
-* [Getting Started](#getting-started)
-  + [Prerequisites](#prerequisites)
-  + [Install](#install)
-  + [Run](#run)
-  + [Docker](#docker)
-* [Important Notes](#---important-notes)
-  + [Limitations](#limitations)
-  + [Recomendations & Tips](#recomendations---tips)
-* [Documentation](#---documentation)
-* [Contributing](#---contributing)
-* [License](#---license)
-* [Show your support](#show-your-support)
-* [Author](#author)
+  * [Getting Started](#getting-started)
+    + [Prerequisites](#prerequisites)
+    + [Install](#install)
+    + [Run](#run)
+    + [Docker](#docker)
+  * [Important Notes](#---important-notes)
+    + [Limitations](#limitations)
+    + [Recomendations & Tips](#recomendations---tips)
+  * [Documentation](#---documentation)
+  * [Contributing](#---contributing)
+  * [License](#---license)
+  * [Show your support](#show-your-support)
+  * [Author](#author)
 
 ## Getting Started
 
@@ -37,13 +37,17 @@ pip install -r requirements.txt
 ```sh
 export SENTRY_BASE_URL="https://sentry.io/api/0/"
 export SENTRY_AUTH_TOKEN="[REPLACE_TOKEN]"
-export SENTRY_EXPORTER_ORG="[organization_slug]"
+export SENTRY_EXPORTER_ORG="[ORGANIZATION_SLUG]"
 ```
 ```sh
 python exporter.py
 ```
 
 ### Docker
+**Run**
+```sh
+docker run --name sentry-exporter -e SENTRY_AUTH_TOKEN=[REPLACE_TOKEN] -e SENTRY_EXPORTER_ORG=[ORGANIZATION_SLUG] italux/sentry-prometheus-exporter
+```
 **Build local image**
 ```sh
 docker-compose build
