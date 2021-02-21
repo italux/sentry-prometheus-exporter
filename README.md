@@ -11,12 +11,13 @@
     + [Install](#install)
     + [Run](#run)
     + [Docker](#docker)
-  * [Important Notes](#---important-notes)
+    + [Samples](#samples)
+  * [Important Notes](#important-notes)
     + [Limitations](#limitations)
-    + [Recomendations & Tips](#recomendations---tips)
-  * [Documentation](#---documentation)
-  * [Contributing](#---contributing)
-  * [License](#---license)
+    + [Recomendations & Tips](#recomendations--tips)
+  * [Documentation](#documentation)
+  * [Contributing](#contributing)
+  * [License](#license)
   * [Show your support](#show-your-support)
   * [Author](#author)
 
@@ -63,7 +64,29 @@ echo SENTRY_EXPORTER_ORG="[organization_slug]"
 docker-compose up -d
 ```
 
-## ⚠️ Important Notes
+## Metrics
+
+- `sentry_open_issue_events`: A Number of open issues (aka is:unresolved) per project in the past 1h
+- `sentry_issues`: Gauge Histogram of open issues split into 3 buckets: 1h, 24h, and 14d
+- `sentry_events`: Total events counts per project
+
+## Samples
+
+**Grafana Dashboard**
+[Sentry Issues & Events Overview](https://grafana.com/grafana/dashboards/13941)
+<img src="samples/grafana.png" width="500">
+
+**Prometheus configuration**: [`prometheus.yml`](samples/prometheus.yml)
+```yaml
+scrape_configs:
+  - job_name: 'sentry_exporter'
+    static_configs:
+    - targets: ['sentry-exporter:9790']
+    scrape_interval: 5m
+    scrape_timeout: 4m
+```
+
+## ℹ️ Important Notes
 
 ### Limitations
 - **Performance**: The exporter is serial, if your organization has a high number of issues & events you may experience `Context Deadline Exceeded` error during a Prometheus scrape
@@ -77,7 +100,7 @@ docker-compose up -d
 
 ## 📒 Documentation
 
-[Sentry Promethesu Exporter documentation](https://italux.github.io/sentry-prometheus-exporter/)
+[Sentry Prometheus Exporter documentation](https://italux.github.io/sentry-prometheus-exporter/)
 
 ## 🤝 Contributing
 
