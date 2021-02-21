@@ -15,9 +15,9 @@
   * [Important Notes](#important-notes)
     + [Limitations](#limitations)
     + [Recomendations & Tips](#recomendations--tips)
-  * [Documentation](#documentation)
-  * [Contributing](#contributing)
-  * [License](#license)
+  * [Documentation](#-documentation)
+  * [Contributing](#-contributing)
+  * [License](#-license)
   * [Show your support](#show-your-support)
   * [Author](#author)
 
