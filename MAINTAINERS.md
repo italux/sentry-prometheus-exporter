@@ -2,6 +2,6 @@
 > Please keep the list sorted alphabetically by handle
 
 ---
-| Github ID                            | Name          |
-|--------------------------------------|---------------|
-| [@italux](https://github.com/italux) | Italo Santos  |
+| Github ID                             | Name           |
+|:--------------------------------------|:---------------|
+| [@italux](https://github.com/italux)  | Italo Santos   |
