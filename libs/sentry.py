@@ -170,8 +170,7 @@ class SentryAPI(object):
 
         for stat_name, values in stats.items():
             for stat in values:
-                if type(stat) != str:
-                    events += stat[1]
+                events += stat[1]
             project_events[stat_name] = events
 
         return project_events
@@ -198,8 +197,6 @@ class SentryAPI(object):
                 org=org_slug, proj_slug=project.get("slug")
             ),
         )
-        if resp.status_code == 404:
-            return []
         environments = [env.get("name") for env in resp.json()]
         return environments
 
@@ -235,10 +232,7 @@ class SentryAPI(object):
             issues = {}
             issues_url = issues_url + "&environment={env}".format(env=environment)
             resp = self.__get(issues_url)
-            if resp.status_code == 404:
-                issues[environment] = []
-            else:
-                issues[environment] = resp.json()  
+            issues[environment] = resp.json()
             return issues
         else:
             resp = self.__get(issues_url)
