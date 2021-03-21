@@ -227,6 +227,7 @@ class SentryCollector(object):
                         proj=project.get("slug"), env=env
                     )
                 )
+
                 project_issues_1h = project_issues.get(env).get("1h")
                 project_issues_24h = project_issues.get(env).get("24h")
                 project_issues_14d = project_issues.get(env).get("14d")
