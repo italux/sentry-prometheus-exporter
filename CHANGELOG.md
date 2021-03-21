@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.1.1](https://github.com/italux/sentry-prometheus-exporter/tree/v0.1.1) (2021-03-21)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.1...v0.1.1)
+
+**Merged pull requests:**
+
+- Catering for fetches of non existent resources [\#7](https://github.com/italux/sentry-prometheus-exporter/pull/7) ([bmistry12](https://github.com/bmistry12))
+- Add some configuration samples [\#6](https://github.com/italux/sentry-prometheus-exporter/pull/6) ([italux](https://github.com/italux))
+
 ## [v0.1](https://github.com/italux/sentry-prometheus-exporter/tree/v0.1) (2021-02-19)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/1bf7b07c407f60dc25b734b58383ba7f381eb865...v0.1)
