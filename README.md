@@ -70,6 +70,20 @@ docker-compose up -d
 - `sentry_issues`: Gauge Histogram of open issues split into 3 buckets: 1h, 24h, and 14d
 - `sentry_events`: Total events counts per project
 
+### Metric Configuration
+By default all metrics are scraped, however, issue or event-related metrics can be disabled by setting the relevant variable to False:
+```sh
+export SENTRY_SCRAPE_ISSUE_METRICS=False
+export SENTRY_SCRAPE_EVENT_METRICS=False
+```
+By default, if `SENTRY_SCRAPE_ISSUE_METRICS=True or is unset` issue metrics are scraped for `1hour`, `24hours` and `14days`. Any of these can be disabled by setting the relevant variable to False:
+```sh
+export SENTRY_ISSUES_1H=False
+export SENTRY_ISSUES_24H=False
+export SENTRY_ISSUES_14D=False
+```
+As with `SENTRY_AUTH_TOKEN`, all of these variables can be passed in through the `docker run -e VAR_NAME=<>` command or via the `.env` file if using Docker Compose.
+
 ## Samples
 
 **Grafana Dashboard**
@@ -97,6 +111,8 @@ scrape_configs:
 > higher number of events will take more time
 - Use a high `scrape_timeout` for the exporter job
 > General recomendation is to set `scrape_interval - 1` (i.e.: `4m`)
+
+- If the scraping of particular metrics are disabled the values above can be reduced depending on your setup.
 
 ## 📒 Documentation
 
