@@ -40,9 +40,10 @@ jobs:
           config_data: |
             extends: default
             rules:
+              truthy: disable
               line-length:
                 max: 99
               indentation:
-                spaces: 2
-                indent-sequences: false
+                spaces: consistent
+                indent-sequences: true
                 check-multi-line-strings: false
