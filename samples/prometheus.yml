@@ -1,3 +1,4 @@
+---
 # my global config
 global:
   scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
@@ -7,9 +8,9 @@ global:
 # Alertmanager configuration
 alerting:
   alertmanagers:
-  - static_configs:
-    - targets:
-      # - alertmanager:9093
+    - static_configs:
+        - targets:
+        # - alertmanager:9093
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
@@ -26,6 +27,6 @@ scrape_configs:
     # scheme defaults to 'http'.
 
     static_configs:
-    - targets: ['sentry-exporter:9790']
+      - targets: ['sentry-exporter:9790']
     scrape_interval: 5m
     scrape_timeout: 4m
