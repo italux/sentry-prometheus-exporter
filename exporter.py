@@ -37,7 +37,13 @@ def get_metric_config():
     get_1h_metrics = getenv("SENTRY_ISSUES_1H") or default_for_time_metrics
     get_24h_metrics = getenv("SENTRY_ISSUES_24H") or default_for_time_metrics
     get_14d_metrics = getenv("SENTRY_ISSUES_14D") or default_for_time_metrics
-    return [scrape_issue_metrics, scrape_events_metrics, get_1h_metrics, get_24h_metrics, get_14d_metrics]
+    return [
+        scrape_issue_metrics,
+        scrape_events_metrics,
+        get_1h_metrics,
+        get_24h_metrics,
+        get_14d_metrics,
+    ]
 
 
 @app.route("/")

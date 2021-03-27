@@ -6,7 +6,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - "./sample/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "./samples/prometheus.yml:/etc/prometheus/prometheus.yml"
   grafana:
     container_name: "grafana"
     image: "grafana/grafana"
