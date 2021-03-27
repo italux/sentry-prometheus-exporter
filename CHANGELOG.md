@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.2.1](https://github.com/italux/sentry-prometheus-exporter/tree/v0.2.1) (2021-03-27)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.2...v0.2.1)
+
+**Closed issues:**
+
+- Allow for user configuration of required metrics [\#9](https://github.com/italux/sentry-prometheus-exporter/issues/9)
+
+**Merged pull requests:**
+
+- Black Code Formatter [\#12](https://github.com/italux/sentry-prometheus-exporter/pull/12) ([italux](https://github.com/italux))
+- Add Github Actions Workflow [\#11](https://github.com/italux/sentry-prometheus-exporter/pull/11) ([italux](https://github.com/italux))
+
 ## [v0.2](https://github.com/italux/sentry-prometheus-exporter/tree/v0.2) (2021-03-24)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.1.1...v0.2)
@@ -7,10 +20,6 @@
 **Implemented enhancements:**
 
 - Allow for user configuration of required metrics [\#10](https://github.com/italux/sentry-prometheus-exporter/pull/10) ([bmistry12](https://github.com/bmistry12))
-
-**Closed issues:**
-
-- Allow for user configuration of required metrics [\#9](https://github.com/italux/sentry-prometheus-exporter/issues/9)
 
 ## [v0.1.1](https://github.com/italux/sentry-prometheus-exporter/tree/v0.1.1) (2021-03-21)
 
