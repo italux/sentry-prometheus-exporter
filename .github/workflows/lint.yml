@@ -26,9 +26,18 @@ jobs:
           args: '. -l 99 -t py37 --check'
 
   yamllint:
+    name: YAML Lint
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: YAML Lint
         uses: ibiqlik/action-yamllint@v3.0.0
+        with:
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 99
+              spaces: 2
