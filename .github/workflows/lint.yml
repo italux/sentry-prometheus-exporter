@@ -1,4 +1,4 @@
-name: Code-Linter
+name: Lint
 
 # Run this workflow every time a new commit pushed to your repository
 on:
@@ -7,21 +7,20 @@ on:
   push:
     branches:
       - master
+    paths:
+      - '**.py'
   pull_request:
     branches:
       - master
+    paths:
+      - '**.py'
 
 jobs:
-  # Set the job key. The key is displayed as the job name
-  # when a job name is not provided
   black:
-    # Name the Job
     name: Black Code Formatter
-    # Set the type of machine to run on
     runs-on: ubuntu-latest
 
     steps:
-      # Checks out a copy of your repository on the ubuntu-latest machine
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -29,3 +28,11 @@ jobs:
         uses: lgeiger/black-action@v1.0.1
         with:
           args: '. -l 99 -t py37 --check'
+
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: YAML Lint
+        uses: ibiqlik/action-yamllint@v3.0.0
