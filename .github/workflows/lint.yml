@@ -40,4 +40,7 @@ jobs:
             rules:
               line-length:
                 max: 99
-              spaces: 2
+                indentation:
+                  spaces: consistent
+                  indent-sequences: true
+                  check-multi-line-strings: false
