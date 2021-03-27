@@ -225,7 +225,10 @@ class SentryAPI(object):
             raise TypeError("project param isn't a dictionary")
 
         issues_url = "projects/{org}/{proj_slug}/issues/?project={proj_id}&sort=date&query=age%3A-{age}".format(
-            org=org_slug, proj_slug=project.get("slug"), proj_id=project.get("id"), age=age
+            org=org_slug,
+            proj_slug=project.get("slug"),
+            proj_id=project.get("id"),
+            age=age,
         )
 
         if environment:

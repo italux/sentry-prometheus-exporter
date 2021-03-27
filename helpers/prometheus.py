@@ -42,7 +42,13 @@ class SentryCollector(object):
       >>> REGISTRY.register(SentryCollector(sentry, org_slug, projects_slug))
     """
 
-    def __init__(self, sentry_api, sentry_org_slug, metric_scraping_config, sentry_projects_slug=None):
+    def __init__(
+        self,
+        sentry_api,
+        sentry_org_slug,
+        metric_scraping_config,
+        sentry_projects_slug=None,
+    ):
         """Inits SentryCollector with a SentryAPI object"""
         super(SentryCollector, self).__init__()
         self.__sentry_api = sentry_api
@@ -175,7 +181,7 @@ class SentryCollector(object):
                             self.org.get("slug"), project, env, age="14d"
                         )
 
-                    log.debug("data structure: building projects issues data"):
+                    log.debug("data structure: building projects issues data")
                     for k, v in project_issues_1h.items():
                         projects_issue_data[project.get("slug")][k] = {"1h": v}
 
