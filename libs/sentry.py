@@ -170,8 +170,7 @@ class SentryAPI(object):
 
         for stat_name, values in stats.items():
             for stat in values:
-                if type(stat) != str:
-                    events += stat[1]
+                events += stat[1]
             project_events[stat_name] = events
 
         return project_events
@@ -198,8 +197,6 @@ class SentryAPI(object):
                 org=org_slug, proj_slug=project.get("slug")
             ),
         )
-        if resp.status_code == 404:
-            return []
         environments = [env.get("name") for env in resp.json()]
         return environments
 
@@ -228,17 +225,17 @@ class SentryAPI(object):
             raise TypeError("project param isn't a dictionary")
 
         issues_url = "projects/{org}/{proj_slug}/issues/?project={proj_id}&sort=date&query=age%3A-{age}".format(
-            org=org_slug, proj_slug=project.get("slug"), proj_id=project.get("id"), age=age
+            org=org_slug,
+            proj_slug=project.get("slug"),
+            proj_id=project.get("id"),
+            age=age,
         )
 
         if environment:
             issues = {}
             issues_url = issues_url + "&environment={env}".format(env=environment)
             resp = self.__get(issues_url)
-            if resp.status_code == 404:
-                issues[environment] = []
-            else:
-                issues[environment] = resp.json()  
+            issues[environment] = resp.json()
             return issues
         else:
             resp = self.__get(issues_url)

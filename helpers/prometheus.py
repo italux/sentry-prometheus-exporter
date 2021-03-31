@@ -42,12 +42,23 @@ class SentryCollector(object):
       >>> REGISTRY.register(SentryCollector(sentry, org_slug, projects_slug))
     """
 
-    def __init__(self, sentry_api, sentry_org_slug, sentry_projects_slug=None):
+    def __init__(
+        self,
+        sentry_api,
+        sentry_org_slug,
+        metric_scraping_config,
+        sentry_projects_slug=None,
+    ):
         """Inits SentryCollector with a SentryAPI object"""
         super(SentryCollector, self).__init__()
         self.__sentry_api = sentry_api
         self.sentry_org_slug = sentry_org_slug
         self.sentry_projects_slug = sentry_projects_slug
+        self.issue_metrics = metric_scraping_config[0]
+        self.events_metrics = metric_scraping_config[1]
+        self.get_1h_metrics = metric_scraping_config[2]
+        self.get_24h_metrics = metric_scraping_config[3]
+        self.get_14d_metrics = metric_scraping_config[4]
 
     def __build_sentry_data_from_api(self):
         """Build a local data structure from sentry API calls.
@@ -132,51 +143,55 @@ class SentryCollector(object):
                 "projects_envs": projects_envs,
             }
         }
+        if self.issue_metrics == "True":
+            __metadata = data.get("metadata")
 
-        __metadata = data.get("metadata")
+            projects_issue_data = {}
 
-        projects_issue_data = {}
+            for project in __metadata.get("projects"):
+                projects_issue_data[project.get("slug")] = {}
+                envs = __metadata.get("projects_envs").get(project.get("slug"))
+                for env in envs:
+                    project_issues_1h = project_issues_24h = project_issues_14d = {}
+                    if self.get_1h_metrics == "True":
+                        log.debug(
+                            "metadata: getting issues from api - project: {proj} env: {env} age: 1h".format(
+                                proj=project.get("slug"), env=env
+                            )
+                        )
+                        project_issues_1h = self.__sentry_api.issues(
+                            self.org.get("slug"), project, env, age="1h"
+                        )
+                    if self.get_24h_metrics == "True":
+                        log.debug(
+                            "metadata: getting issues from api - project: {proj} env: {env} age: 24h".format(
+                                proj=project.get("slug"), env=env
+                            )
+                        )
+                        project_issues_24h = self.__sentry_api.issues(
+                            self.org.get("slug"), project, env, age="24h"
+                        )
+                    if self.get_14d_metrics == "True":
+                        log.debug(
+                            "metadata: getting issues from api - project: {proj} env: {env} age: 14d".format(
+                                proj=project.get("slug"), env=env
+                            )
+                        )
+                        project_issues_14d = self.__sentry_api.issues(
+                            self.org.get("slug"), project, env, age="14d"
+                        )
 
-        for project in __metadata.get("projects"):
-            projects_issue_data[project.get("slug")] = {}
-            envs = __metadata.get("projects_envs").get(project.get("slug"))
-            for env in envs:
-                log.debug(
-                    "metadata: getting issues from api - project: {proj} env: {env} age: 1h".format(
-                        proj=project.get("slug"), env=env
-                    )
-                )
-                project_issues_1h = self.__sentry_api.issues(
-                    self.org.get("slug"), project, env, age="1h"
-                )
-                log.debug(
-                    "metadata: getting issues from api - project: {proj} env: {env} age: 24h".format(
-                        proj=project.get("slug"), env=env
-                    )
-                )
-                project_issues_24h = self.__sentry_api.issues(
-                    self.org.get("slug"), project, env, age="24h"
-                )
-                log.debug(
-                    "metadata: getting issues from api - project: {proj} env: {env} age: 14d".format(
-                        proj=project.get("slug"), env=env
-                    )
-                )
-                project_issues_14d = self.__sentry_api.issues(
-                    self.org.get("slug"), project, env, age="14d"
-                )
+                    log.debug("data structure: building projects issues data")
+                    for k, v in project_issues_1h.items():
+                        projects_issue_data[project.get("slug")][k] = {"1h": v}
 
-                log.debug("data structure: building projects issues data")
-                for k, v in project_issues_1h.items():
-                    projects_issue_data[project.get("slug")][k] = {"1h": v}
+                    for k, v in project_issues_24h.items():
+                        projects_issue_data[project.get("slug")][k].update({"24h": v})
 
-                for k, v in project_issues_24h.items():
-                    projects_issue_data[project.get("slug")][k].update({"24h": v})
+                    for k, v in project_issues_14d.items():
+                        projects_issue_data[project.get("slug")][k].update({"14d": v})
 
-                for k, v in project_issues_14d.items():
-                    projects_issue_data[project.get("slug")][k].update({"14d": v})
-
-        data["projects_data"] = projects_issue_data
+            data["projects_data"] = projects_issue_data
 
         write_cache(JSON_CACHE_FILE, data, DEFAULT_CACHE_EXPIRE_TIMESTAMP)
         log.debug("cache: writing data structure to file: {cache}".format(cache=JSON_CACHE_FILE))
@@ -205,157 +220,161 @@ class SentryCollector(object):
         self.org = __metadata.get("org")
         self.projects_data = {}
 
-        issues_histogram_metrics = GaugeHistogramMetricFamily(
-            "sentry_issues",
-            "Number of open issues (aka is:unresolved) per project",
-            buckets=None,
-            gsum_value=None,
-            labels=[
-                "project_slug",
-                "environment",
-            ],
-            unit="",
-        )
+        if self.issue_metrics == "True":
+            issues_histogram_metrics = GaugeHistogramMetricFamily(
+                "sentry_issues",
+                "Number of open issues (aka is:unresolved) per project",
+                buckets=None,
+                gsum_value=None,
+                labels=[
+                    "project_slug",
+                    "environment",
+                ],
+                unit="",
+            )
 
-        log.info("collector: loading projects issues")
-        for project in __metadata.get("projects"):
-            envs = __metadata.get("projects_envs").get(project.get("slug"))
-            project_issues = __projects_data.get(project.get("slug"))
-            for env in envs:
-                log.debug(
-                    "collector: loading issues - project: {proj} env: {env}".format(
-                        proj=project.get("slug"), env=env
+            log.info("collector: loading projects issues")
+            for project in __metadata.get("projects"):
+                envs = __metadata.get("projects_envs").get(project.get("slug"))
+                project_issues = __projects_data.get(project.get("slug"))
+                for env in envs:
+                    log.debug(
+                        "collector: loading issues - project: {proj} env: {env}".format(
+                            proj=project.get("slug"), env=env
+                        )
                     )
-                )
 
-                project_issues_1h = project_issues.get(env).get("1h")
-                project_issues_24h = project_issues.get(env).get("24h")
-                project_issues_14d = project_issues.get(env).get("14d")
+                    project_issues_1h = project_issues.get(env).get("1h")
+                    project_issues_24h = project_issues.get(env).get("24h")
+                    project_issues_14d = project_issues.get(env).get("14d")
 
-                events_1h = 0
-                events_24h = 0
-                events_14d = 0
+                    events_1h = 0
+                    events_24h = 0
+                    events_14d = 0
 
-                if project_issues_1h:
-                    for issue in project_issues_1h:
-                        events_1h += int(issue.get("count") or 0)
+                    if project_issues_1h:
+                        for issue in project_issues_1h:
+                            events_1h += int(issue.get("count") or 0)
 
-                if project_issues_24h:
-                    for issue in project_issues_24h:
-                        events_24h += int(issue.get("count") or 0)
+                    if project_issues_24h:
+                        for issue in project_issues_24h:
+                            events_24h += int(issue.get("count") or 0)
 
-                if project_issues_14d:
-                    for issue in project_issues_14d:
-                        events_14d += int(issue.get("count") or 0)
+                    if project_issues_14d:
+                        for issue in project_issues_14d:
+                            events_14d += int(issue.get("count") or 0)
 
-                sum_events = events_1h + events_24h + events_14d
-
-                issues_histogram_metrics.add_metric(
-                    labels=[
-                        str(project.get("slug")),
-                        str(env),
-                    ],
-                    buckets=[
-                        ("1h", float(events_1h)),
-                        ("24h", float(events_24h)),
-                        ("+Inf", float(events_14d)),
-                    ],
-                    gsum_value=int(sum_events),
-                )
-
-        yield issues_histogram_metrics
-
-        issues_metrics = GaugeMetricFamily(
-            "sentry_open_issue_events",
-            "Number of open issues (aka is:unresolved) per project",
-            labels=[
-                "issue_id",
-                "logger",
-                "level",
-                "status",
-                "platform",
-                "project_slug",
-                "environment",
-                "release",
-                "isUnhandled",
-                "firstSeen",
-                "lastSeen",
-            ],
-        )
-
-        for project in __metadata.get("projects"):
-            envs = __metadata.get("projects_envs").get(project.get("slug"))
-            project_issues = __projects_data.get(project.get("slug"))
-            for env in envs:
-                project_issues_1h = project_issues.get(env).get("1h")
-                for issue in project_issues_1h:
-                    release = self.__sentry_api.issue_release(issue.get("id"), env)
-                    issues_metrics.add_metric(
-                        [
-                            str(issue.get("id")),
-                            str(issue.get("logger")) or "None",
-                            str(issue.get("level")),
-                            str(issue.get("status")),
-                            str(issue.get("platform")),
-                            str(issue.get("project").get("slug")),
+                    sum_events = events_1h + events_24h + events_14d
+                    histo_buckets = []
+                    if self.get_1h_metrics == "True":
+                        histo_buckets.append(("1h", float(events_1h)))
+                    if self.get_24h_metrics == "True":
+                        histo_buckets.append(("24h", float(events_24h)))
+                    if self.get_14d_metrics == "True":
+                        histo_buckets.append(("+Inf", float(events_14d)))
+                    issues_histogram_metrics.add_metric(
+                        labels=[
+                            str(project.get("slug")),
                             str(env),
-                            str(release),
-                            str(issue.get("isUnhandled")),
-                            str(
-                                datetime.strftime(
-                                    datetime.strptime(
-                                        str(
-                                            issue.get("firstSeen")
-                                            # if the issue age is recent, firstSeen returns None
-                                            # and we'll return datetime.now() as default
-                                            or datetime.strftime(
-                                                datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
-                                            )
-                                        ),
-                                        "%Y-%m-%dT%H:%M:%SZ",
-                                    ),
-                                    "%Y-%m-%d",
-                                )
-                            ),
-                            str(
-                                datetime.strftime(
-                                    datetime.strptime(
-                                        str(
-                                            issue.get("lastSeen")
-                                            # if the issue age is recent, lastSeen returns None
-                                            # and we'll return datetime.now() as default
-                                            or datetime.strftime(
-                                                datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
-                                            )
-                                        ),
-                                        "%Y-%m-%dT%H:%M:%SZ",
-                                    ),
-                                    "%Y-%m-%d",
-                                )
-                            ),
                         ],
-                        int(issue.get("count")),
+                        buckets=histo_buckets,
+                        gsum_value=int(sum_events),
                     )
-        yield issues_metrics
 
-        project_events_metrics = CounterMetricFamily(
-            "sentry_events",
-            "Total events counts per project",
-            labels=[
-                "project_slug",
-                "stat",
-            ],
-        )
+            yield issues_histogram_metrics
 
-        for project in __metadata.get("projects"):
-            events = self.__sentry_api.project_stats(self.org.get("slug"), project.get("slug"))
-            for stat, value in events.items():
-                project_events_metrics.add_metric(
-                    [
-                        str(project.get("slug")),
-                        str(stat),
-                    ],
-                    int(value),
-                )
+            issues_metrics = GaugeMetricFamily(
+                "sentry_open_issue_events",
+                "Number of open issues (aka is:unresolved) per project",
+                labels=[
+                    "issue_id",
+                    "logger",
+                    "level",
+                    "status",
+                    "platform",
+                    "project_slug",
+                    "environment",
+                    "release",
+                    "isUnhandled",
+                    "firstSeen",
+                    "lastSeen",
+                ],
+            )
 
-        yield project_events_metrics
+            for project in __metadata.get("projects"):
+                envs = __metadata.get("projects_envs").get(project.get("slug"))
+                project_issues = __projects_data.get(project.get("slug"))
+                for env in envs:
+                    project_issues_1h = project_issues.get(env).get("1h")
+                    for issue in project_issues_1h:
+                        release = self.__sentry_api.issue_release(issue.get("id"), env)
+                        issues_metrics.add_metric(
+                            [
+                                str(issue.get("id")),
+                                str(issue.get("logger")) or "None",
+                                str(issue.get("level")),
+                                str(issue.get("status")),
+                                str(issue.get("platform")),
+                                str(issue.get("project").get("slug")),
+                                str(env),
+                                str(release),
+                                str(issue.get("isUnhandled")),
+                                str(
+                                    datetime.strftime(
+                                        datetime.strptime(
+                                            str(
+                                                issue.get("firstSeen")
+                                                # if the issue age is recent, firstSeen returns None
+                                                # and we'll return datetime.now() as default
+                                                or datetime.strftime(
+                                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
+                                                )
+                                            ),
+                                            "%Y-%m-%dT%H:%M:%SZ",
+                                        ),
+                                        "%Y-%m-%d",
+                                    )
+                                ),
+                                str(
+                                    datetime.strftime(
+                                        datetime.strptime(
+                                            str(
+                                                issue.get("lastSeen")
+                                                # if the issue age is recent, lastSeen returns None
+                                                # and we'll return datetime.now() as default
+                                                or datetime.strftime(
+                                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
+                                                )
+                                            ),
+                                            "%Y-%m-%dT%H:%M:%SZ",
+                                        ),
+                                        "%Y-%m-%d",
+                                    )
+                                ),
+                            ],
+                            int(issue.get("count")),
+                        )
+            yield issues_metrics
+
+        if self.events_metrics == "True":
+            project_events_metrics = CounterMetricFamily(
+                "sentry_events",
+                "Total events counts per project",
+                labels=[
+                    "project_slug",
+                    "stat",
+                ],
+            )
+
+            for project in __metadata.get("projects"):
+                events = self.__sentry_api.project_stats(self.org.get("slug"), project.get("slug"))
+                for stat, value in events.items():
+                    project_events_metrics.add_metric(
+                        [
+                            str(project.get("slug")),
+                            str(stat),
+                        ],
+                        int(value),
+                    )
+
+            yield project_events_metrics

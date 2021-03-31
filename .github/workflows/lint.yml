@@ -1,0 +1,49 @@
+name: Lint
+
+# Run this workflow every time a new commit pushed to your repository
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  black:
+    name: Black Code Formatter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Black Code Formatter
+        uses: lgeiger/black-action@v1.0.1
+        with:
+          args: '. -l 99 -t py37 --check'
+
+  yamllint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: YAML Lint
+        uses: ibiqlik/action-yamllint@v3.0.0
+        with:
+          file_or_dir: .
+          format: standard
+          config_data: |
+            extends: default
+            rules:
+              truthy: disable
+              line-length:
+                max: 99
+              indentation:
+                spaces: consistent
+                indent-sequences: true
+                check-multi-line-strings: false

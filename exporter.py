@@ -29,6 +29,23 @@ logging.basicConfig(
 app = Flask(__name__)
 
 
+def get_metric_config():
+    """Get metric scraping options."""
+    scrape_issue_metrics = getenv("SENTRY_SCRAPE_ISSUE_METRICS") or "True"
+    scrape_events_metrics = getenv("SENTRY_SCRAPE_EVENT_METRICS") or "True"
+    default_for_time_metrics = "True" if scrape_issue_metrics == "True" else "False"
+    get_1h_metrics = getenv("SENTRY_ISSUES_1H") or default_for_time_metrics
+    get_24h_metrics = getenv("SENTRY_ISSUES_24H") or default_for_time_metrics
+    get_14d_metrics = getenv("SENTRY_ISSUES_14D") or default_for_time_metrics
+    return [
+        scrape_issue_metrics,
+        scrape_events_metrics,
+        get_1h_metrics,
+        get_24h_metrics,
+        get_14d_metrics,
+    ]
+
+
 @app.route("/")
 def hello_world():
     return "<h1>Sentry Issues & Events Exporter</h1>\
@@ -41,7 +58,7 @@ def sentry_exporter():
     sentry = SentryAPI(BASE_URL, AUTH_TOKEN)
     log.info("exporter: cleaning registry collectors...")
     clean_registry()
-    REGISTRY.register(SentryCollector(sentry, ORG_SLUG, PROJECTS_SLUG))
+    REGISTRY.register(SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG))
     exporter = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app()})
     return exporter
 
