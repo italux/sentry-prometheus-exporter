@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.2.2](https://github.com/italux/sentry-prometheus-exporter/tree/v0.2.2) (2021-05-30)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.2.1...v0.2.2)
+
+**Merged pull requests:**
+
+- Re-add deleted projects check [\#15](https://github.com/italux/sentry-prometheus-exporter/pull/15) ([bmistry12](https://github.com/bmistry12))
+- YAML Lint Formatter [\#13](https://github.com/italux/sentry-prometheus-exporter/pull/13) ([italux](https://github.com/italux))
+
 ## [v0.2.1](https://github.com/italux/sentry-prometheus-exporter/tree/v0.2.1) (2021-03-27)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.2...v0.2.1)
