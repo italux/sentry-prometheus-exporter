@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import getenv
+from retry import retry
 
 import requests
 
@@ -27,9 +27,12 @@ class SentryAPI(object):
         self.__token = auth_token
         self.__session = requests.Session()
 
+    @retry(requests.exceptions.HTTPError, tries=2, delay=1)
     def __get(self, url):
         HEADERS = {"Authorization": "Bearer " + self.__token}
-        return self.__session.get(self.base_url + url, headers=HEADERS)
+        response = self.__session.get(self.base_url + url, headers=HEADERS)
+        response.raise_for_status()
+        return response
 
     def __post(self, url):
         raise NotImplementedError
