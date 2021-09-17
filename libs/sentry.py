@@ -1,5 +1,6 @@
 from datetime import datetime
 from os import getenv
+from ratelimit import limits, sleep_and_retry
 
 import requests
 
@@ -27,6 +28,10 @@ class SentryAPI(object):
         self.__token = auth_token
         self.__session = requests.Session()
 
+
+    # The rate limit for the sentry API is 3 requests per second according to the response, but setting the calls to 3 won't work. Running it with 2 calls per second is slow, but works every time.
+    @sleep_and_retry
+    @limits(calls=2, period=1)
     def __get(self, url):
         HEADERS = {"Authorization": "Bearer " + self.__token}
         return self.__session.get(self.base_url + url, headers=HEADERS)
