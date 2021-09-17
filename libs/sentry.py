@@ -4,6 +4,8 @@ from ratelimit import limits, sleep_and_retry
 
 import requests
 
+rate_limit_calls = getenv("SENTRY_RATE_LIMIT_CALLS") or 2
+rate_limit_period = getenv("SENTRY_RATE_LIMIT_PERIOD") or 1
 
 class SentryAPI(object):
     """A simple :class:`SentryAPI <SentryAPI>` to interact with Sentry's Web API.
@@ -31,7 +33,7 @@ class SentryAPI(object):
 
     # The rate limit for the sentry API is 3 requests per second according to the response, but setting the calls to 3 won't work. Running it with 2 calls per second is slow, but works every time.
     @sleep_and_retry
-    @limits(calls=2, period=1)
+    @limits(calls=int(rate_limit_calls), period=int(rate_limit_period))
     def __get(self, url):
         HEADERS = {"Authorization": "Bearer " + self.__token}
         return self.__session.get(self.base_url + url, headers=HEADERS)

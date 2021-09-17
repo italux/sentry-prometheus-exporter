@@ -84,6 +84,19 @@ export SENTRY_ISSUES_14D=False
 ```
 As with `SENTRY_AUTH_TOKEN`, all of these variables can be passed in through the `docker run -e VAR_NAME=<>` command or via the `.env` file if using Docker Compose.
 
+### Rate limit
+
+The Sentry API limits the rate of requests to 3 per second, so by default the exporter makes 2 requests per second to comply with this.
+
+You can tweak your settings to increase or decrease the request rate of the exporter using the following environment variables:
+
+```sh
+export SENTRY_RATE_LIMIT CALLS=2
+export SENTRY_RATE_LIMIT_PERIOD=1
+```
+
+Calls being the number of requests and period the timeframe, in seconds. If you don't set the variables, it defaults to a max. 2 requests per second.
+
 ## Samples
 
 **Grafana Dashboard**
