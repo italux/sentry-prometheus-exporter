@@ -84,6 +84,20 @@ export SENTRY_ISSUES_14D=False
 ```
 As with `SENTRY_AUTH_TOKEN`, all of these variables can be passed in through the `docker run -e VAR_NAME=<>` command or via the `.env` file if using Docker Compose.
 
+### Retries to get around limits
+
+The Sentry API limits the rate of requests to 3 per second, so the exporter retries on an HTTP exception.
+
+You can tweak your settings with environment variables, though default settings should work:
+
+|  Environment variable    | Value type | Default value |                         Purpose                         |
+|:------------------------:|:----------:|:-------------:|:-------------------------------------------------------:|
+| `SENTRY_RETRY_TRIES`     | Integer    | 3             | How many retries should be made in case of an exception |
+| `SENTRY_RETRY_DELAY`     | Float      | 1             | How many seconds to wait between retries                |
+| `SENTRY_RETRY_MAX_DELAY` | Float      | 10            | Max delay to wait between retries                       |
+| `SENTRY_RETRY_BACKOFF`   | Float      | 2             | Multiplier applied to delay between attempts            |
+| `SENTRY_RETRY_JITTER`    | Float      | 0.5           | Extra seconds added to delay between attempts           |
+
 ## Samples
 
 **Grafana Dashboard**
@@ -122,7 +136,7 @@ scrape_configs:
 
 Contributions, issues and feature requests are welcome!
 
-- Feel free to check [issues page](https://github.com/italux/sentry-prometheus-exporter/issues). 
+- Feel free to check [issues page](https://github.com/italux/sentry-prometheus-exporter/issues).
 
 
 ## 📝 License
