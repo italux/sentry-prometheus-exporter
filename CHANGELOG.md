@@ -1,7 +1,5 @@
 # Changelog
 
-# Changelog
-
 ## [v0.3.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.3.0) (2021-09-21)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.3.0...v0.3.0)
