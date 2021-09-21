@@ -14,6 +14,7 @@
     + [Samples](#samples)
   * [Important Notes](#important-notes)
     + [Limitations](#limitations)
+    + [Sentry API retry calls](#sentry-api-retry-calls)
     + [Recomendations & Tips](#recomendations--tips)
   * [Documentation](#-documentation)
   * [Contributing](#-contributing)
