@@ -1,7 +1,16 @@
 from datetime import datetime
 from os import getenv
 
+from retry import retry
 import requests
+
+retry_settings = {
+    "tries": int(getenv("SENTRY_RETRY_TRIES", "3")),
+    "delay": float(getenv("SENTRY_RETRY_DELAY", "1")),
+    "max_delay": float(getenv("SENTRY_RETRY_MAX_DELAY", "10")),
+    "backoff": float(getenv("SENTRY_RETRY_BACKOFF", "2")),
+    "jitter": float(getenv("SENTRY_RETRY_JITTER", "0.5")),
+}
 
 
 class SentryAPI(object):
@@ -27,9 +36,12 @@ class SentryAPI(object):
         self.__token = auth_token
         self.__session = requests.Session()
 
+    @retry(requests.exceptions.HTTPError, **retry_settings)
     def __get(self, url):
         HEADERS = {"Authorization": "Bearer " + self.__token}
-        return self.__session.get(self.base_url + url, headers=HEADERS)
+        response = self.__session.get(self.base_url + url, headers=HEADERS)
+        response.raise_for_status()
+        return response
 
     def __post(self, url):
         raise NotImplementedError

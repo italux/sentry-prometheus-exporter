@@ -105,6 +105,20 @@ scrape_configs:
 ### Limitations
 - **Performance**: The exporter is serial, if your organization has a high number of issues & events you may experience `Context Deadline Exceeded` error during a Prometheus scrape
 
+### Sentry API retry calls
+
+The Sentry API limits the rate of requests to 3 per second, so the exporter retries on an HTTP exception.
+
+You can tweak retry settings with environment variables, though default settings should work:
+
+|  Environment variable    | Value type | Default value |                         Purpose                         |
+|:------------------------:|:----------:|:-------------:|:-------------------------------------------------------:|
+| `SENTRY_RETRY_TRIES`     | Integer    | 3             | How many retries should be made in case of an exception |
+| `SENTRY_RETRY_DELAY`     | Float      | 1             | How many seconds to wait between retries                |
+| `SENTRY_RETRY_MAX_DELAY` | Float      | 10            | Max delay to wait between retries                       |
+| `SENTRY_RETRY_BACKOFF`   | Float      | 2             | Multiplier applied to delay between attempts            |
+| `SENTRY_RETRY_JITTER`    | Float      | 0.5           | Extra seconds added to delay between attempts           |
+
 ### Recomendations & Tips
 - Use `scrape_interval: 5m` minimum.
 > This value will be defined by the number of new issues and events\
@@ -122,7 +136,7 @@ scrape_configs:
 
 Contributions, issues and feature requests are welcome!
 
-- Feel free to check [issues page](https://github.com/italux/sentry-prometheus-exporter/issues). 
+- Feel free to check [issues page](https://github.com/italux/sentry-prometheus-exporter/issues).
 
 
 ## 📝 License
