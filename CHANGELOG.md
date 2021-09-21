@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.3.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.3.0) (2021-09-21)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.2.2...v0.3.0)
+
+**Closed issues:**
+
+- Specify the project names that I want to get metrics. [\#14](https://github.com/italux/sentry-prometheus-exporter/issues/14)
+
+**Merged pull requests:**
+
+- pip: bump flask from 1.0.2 to 2.0.1 [\#26](https://github.com/italux/sentry-prometheus-exporter/pull/26) ([dependabot[bot]](https://github.com/apps/dependabot))
+- pip: bump prometheus-client from 0.9.0 to 0.11.0 [\#25](https://github.com/italux/sentry-prometheus-exporter/pull/25) ([dependabot[bot]](https://github.com/apps/dependabot))
+- pip: bump requests from 2.25.1 to 2.26.0 [\#24](https://github.com/italux/sentry-prometheus-exporter/pull/24) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v0.2.2](https://github.com/italux/sentry-prometheus-exporter/tree/v0.2.2) (2021-05-30)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.2.1...v0.2.2)
