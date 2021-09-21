@@ -1,20 +1,14 @@
 # Changelog
 
-## [Unreleased](https://github.com/italux/sentry-prometheus-exporter/tree/HEAD)
+# Changelog
 
-[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.3.0...HEAD)
+## [v0.3.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.3.0) (2021-09-21)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.3.0...v0.3.0)
 
 **Fixed bugs:**
 
 - Exporter queries Sentry API too fast and crashes [\#21](https://github.com/italux/sentry-prometheus-exporter/issues/21)
-
-## [v0.3.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.3.0) (2021-09-21)
-
-[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.2.2...v0.3.0)
-
-**Fixed bugs:**
-
-- Handle Sentry HTTP errors [\#22](https://github.com/italux/sentry-prometheus-exporter/pull/22) ([lululombard](https://github.com/lululombard))
 
 **Closed issues:**
 
@@ -22,6 +16,7 @@
 
 **Merged pull requests:**
 
+- Handle Sentry HTTP errors [\#22](https://github.com/italux/sentry-prometheus-exporter/pull/22) ([lululombard](https://github.com/lululombard))
 - pip: bump flask from 1.0.2 to 2.0.1 [\#26](https://github.com/italux/sentry-prometheus-exporter/pull/26) ([dependabot[bot]](https://github.com/apps/dependabot))
 - pip: bump prometheus-client from 0.9.0 to 0.11.0 [\#25](https://github.com/italux/sentry-prometheus-exporter/pull/25) ([dependabot[bot]](https://github.com/apps/dependabot))
 - pip: bump requests from 2.25.1 to 2.26.0 [\#24](https://github.com/italux/sentry-prometheus-exporter/pull/24) ([dependabot[bot]](https://github.com/apps/dependabot))
