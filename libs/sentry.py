@@ -93,14 +93,17 @@ class SentryAPI(object):
 
         return organization
 
-    def projects(self):
-        """Return a list of projects available to the authenticated session.
+    def projects(self, org_slug):
+        """Return a list of projects of the specified organization.
+
+        Args:
+            org_slug: A organization's slug string name.
 
         Returns:
             A list mapping with dictionary keys to the corresponding projects
         """
 
-        resp = self.__get("projects/")
+        resp = self.__get("organizations/{org}/projects/?all_projects=1".format(org=org_slug))
         projects = []
         for proj in resp.json():
             project = {}
