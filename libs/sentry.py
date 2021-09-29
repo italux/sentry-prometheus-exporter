@@ -161,7 +161,6 @@ class SentryAPI(object):
             A dict([list])
         """
 
-        events = 0
         first_day_month = datetime.timestamp(datetime.today().replace(day=1))
         today = datetime.timestamp(datetime.today())
         stat_names = ["received", "rejected", "blacklisted"]
@@ -181,6 +180,7 @@ class SentryAPI(object):
             stats[stat_name] = resp.json()
 
         for stat_name, values in stats.items():
+            events = 0
             for stat in values:
                 if type(stat) != str:
                     events += stat[1]
