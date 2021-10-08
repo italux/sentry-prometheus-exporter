@@ -72,10 +72,11 @@ docker-compose up -d
 - `sentry_events`: Total events counts per project
 
 ### Metric Configuration
-By default all metrics are scraped, however, issue or event-related metrics can be disabled by setting the relevant variable to False:
+By default all metrics are scraped, however, issue, event-related or rate-limit metrics can be disabled by setting the relevant variable to False:
 ```sh
 export SENTRY_SCRAPE_ISSUE_METRICS=False
 export SENTRY_SCRAPE_EVENT_METRICS=False
+export SENTRY_SCRAPE_RATE_LIMIT_METRICS=False
 ```
 By default, if `SENTRY_SCRAPE_ISSUE_METRICS=True or is unset` issue metrics are scraped for `1hour`, `24hours` and `14days`. Any of these can be disabled by setting the relevant variable to False:
 ```sh
