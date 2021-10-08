@@ -56,9 +56,10 @@ class SentryCollector(object):
         self.sentry_projects_slug = sentry_projects_slug
         self.issue_metrics = metric_scraping_config[0]
         self.events_metrics = metric_scraping_config[1]
-        self.get_1h_metrics = metric_scraping_config[2]
-        self.get_24h_metrics = metric_scraping_config[3]
-        self.get_14d_metrics = metric_scraping_config[4]
+        self.rate_limit_metrics = metric_scraping_config[2]
+        self.get_1h_metrics = metric_scraping_config[3]
+        self.get_24h_metrics = metric_scraping_config[4]
+        self.get_14d_metrics = metric_scraping_config[5]
 
     def __build_sentry_data_from_api(self):
         """Build a local data structure from sentry API calls.
@@ -378,3 +379,21 @@ class SentryCollector(object):
                     )
 
             yield project_events_metrics
+
+        if self.rate_limit_metrics == "True":
+            project_rate_metrics = CounterMetricFamily(
+                "sentry_rate_limit_seconds",
+                "Rate limit per project",
+                labels=["project_slug"]
+            )
+
+            for project in __metadata.get("projects"):
+                rate_limit_seconds = self.__sentry_api.rate_limit(self.org.get("slug"), project.get("slug"))
+                project_rate_metrics.add_metric(
+                    [
+                        str(project.get("slug"))
+                    ],
+                    round(rate_limit_seconds, 6)
+                )
+
+            yield project_rate_metrics

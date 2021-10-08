@@ -294,7 +294,7 @@ class SentryAPI(object):
             return {"all": resp.json()}
 
     def issue_events(self, issue_id, environment=None):
-        """This methid lists issue's events."""
+        """This method lists issue's events."""
 
         issue_events_url = "issues/{issue_id}/events/".format(issue_id=issue_id)
 
@@ -311,7 +311,7 @@ class SentryAPI(object):
             return {"all": resp.json()}
 
     def issue_release(self, issue_id, environment=None):
-        """This methid lists issue's events."""
+        """This method lists issue's events."""
 
         issue_release_url = "issues/{issue_id}/current-release/".format(issue_id=issue_id)
 
@@ -361,3 +361,24 @@ class SentryAPI(object):
         else:
             resp = self.__get(proj_releases_url)
             return {"all": resp.json()}
+
+    def rate_limit(self, org_slug, project_slug):
+        """Return client key rate limits configuration on an individual projec.
+
+        Args:
+            org_slug: A organization's slug string name.
+            project_slug: The project's slug string name
+
+        Returns:
+            A dict corresponding of the project rate limit key
+        """
+
+        rate_limit_url = "projects/{org}/{proj_slug}/keys/".format(
+          org=org_slug, proj_slug=project_slug
+        )
+        resp = self.__get(rate_limit_url)
+        rate_limit_window = resp.json()[0].get("rateLimit").get("window")
+        rate_limit_count = resp.json()[0].get("rateLimit").get("count")
+        rate_limit_seconds = rate_limit_count / rate_limit_window
+
+        return rate_limit_seconds
