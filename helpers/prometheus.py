@@ -125,7 +125,7 @@ class SentryCollector(object):
             log.info(
                 "metadata: no projects specified, loading from API".format(num_proj=len(projects))
             )
-            for project in self.__sentry_api.projects():
+            for project in self.__sentry_api.projects(self.sentry_org_slug):
                 projects.append(project)
                 projects_slug.append(project.get("slug"))
                 envs = self.__sentry_api.environments(self.org.get("slug"), project)
