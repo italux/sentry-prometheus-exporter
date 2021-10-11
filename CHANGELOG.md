@@ -1,13 +1,5 @@
 # Changelog
 
-## [Unreleased](https://github.com/italux/sentry-prometheus-exporter/tree/HEAD)
-
-[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.4.0...HEAD)
-
-**Closed issues:**
-
-- incorrect sentry\_events\_total count [\#27](https://github.com/italux/sentry-prometheus-exporter/issues/27)
-
 ## [v0.4.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.4.0) (2021-10-10)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.3.0...v0.4.0)
@@ -19,6 +11,7 @@
 
 **Closed issues:**
 
+- incorrect sentry\_events\_total count [\#27](https://github.com/italux/sentry-prometheus-exporter/issues/27)
 - Not correctly managing project list pagination. [\#29](https://github.com/italux/sentry-prometheus-exporter/issues/29)
 
 **Merged pull requests:**
