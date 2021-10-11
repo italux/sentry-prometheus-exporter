@@ -379,6 +379,6 @@ class SentryAPI(object):
         resp = self.__get(rate_limit_url)
         rate_limit_window = resp.json()[0].get("rateLimit").get("window")
         rate_limit_count = resp.json()[0].get("rateLimit").get("count")
-        rate_limit_seconds = rate_limit_count / rate_limit_window
+        rate_limit_second = rate_limit_count / rate_limit_window
 
-        return rate_limit_seconds
+        return rate_limit_second

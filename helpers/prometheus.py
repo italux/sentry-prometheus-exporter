@@ -382,18 +382,18 @@ class SentryCollector(object):
 
         if self.rate_limit_metrics == "True":
             project_rate_metrics = CounterMetricFamily(
-                "sentry_rate_limit_seconds",
+                "sentry_rate_limit_second",
                 "Rate limit per project",
                 labels=["project_slug"]
             )
 
             for project in __metadata.get("projects"):
-                rate_limit_seconds = self.__sentry_api.rate_limit(self.org.get("slug"), project.get("slug"))
+                rate_limit_second = self.__sentry_api.rate_limit(self.org.get("slug"), project.get("slug"))
                 project_rate_metrics.add_metric(
                     [
                         str(project.get("slug"))
                     ],
-                    round(rate_limit_seconds, 6)
+                    round(rate_limit_second, 6)
                 )
 
             yield project_rate_metrics
