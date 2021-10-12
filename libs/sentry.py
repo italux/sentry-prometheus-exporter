@@ -374,11 +374,14 @@ class SentryAPI(object):
         """
 
         rate_limit_url = "projects/{org}/{proj_slug}/keys/".format(
-          org=org_slug, proj_slug=project_slug
+            org=org_slug, proj_slug=project_slug
         )
         resp = self.__get(rate_limit_url)
-        rate_limit_window = resp.json()[0].get("rateLimit").get("window")
-        rate_limit_count = resp.json()[0].get("rateLimit").get("count")
-        rate_limit_second = rate_limit_count / rate_limit_window
+        if resp.json()[0].get("rateLimit"):
+            rate_limit_window = resp.json()[0].get("rateLimit").get("window")
+            rate_limit_count = resp.json()[0].get("rateLimit").get("count")
+            rate_limit_second = rate_limit_count / rate_limit_window
+        else:
+            rate_limit_second = 0
 
         return rate_limit_second
