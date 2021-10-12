@@ -381,19 +381,18 @@ class SentryCollector(object):
             yield project_events_metrics
 
         if self.rate_limit_metrics == "True":
-            project_rate_metrics = CounterMetricFamily(
+            project_rate_metrics = GaugeMetricFamily(
                 "sentry_rate_limit_events_sec",
                 "Rate limit events per second for a project",
-                labels=["project_slug"]
+                labels=["project_slug"],
             )
 
             for project in __metadata.get("projects"):
-                rate_limit_second = self.__sentry_api.rate_limit(self.org.get("slug"), project.get("slug"))
+                rate_limit_second = self.__sentry_api.rate_limit(
+                    self.org.get("slug"), project.get("slug")
+                )
                 project_rate_metrics.add_metric(
-                    [
-                        str(project.get("slug"))
-                    ],
-                    round(rate_limit_second, 6)
+                    [str(project.get("slug"))], round(rate_limit_second, 6)
                 )
 
             yield project_rate_metrics
