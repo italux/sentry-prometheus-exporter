@@ -363,7 +363,7 @@ class SentryAPI(object):
             return {"all": resp.json()}
 
     def rate_limit(self, org_slug, project_slug):
-        """Return client key rate limits configuration on an individual projec.
+        """Return client key rate limits configuration on an individual project.
 
         Args:
             org_slug: A organization's slug string name.
