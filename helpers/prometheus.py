@@ -382,8 +382,8 @@ class SentryCollector(object):
 
         if self.rate_limit_metrics == "True":
             project_rate_metrics = CounterMetricFamily(
-                "sentry_rate_limit_second",
-                "Rate limit per project",
+                "sentry_rate_limit_events_sec",
+                "Rate limit events per second for a project",
                 labels=["project_slug"]
             )
 
