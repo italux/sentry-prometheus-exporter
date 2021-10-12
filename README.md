@@ -70,7 +70,7 @@ docker-compose up -d
 - `sentry_open_issue_events`: A Number of open issues (aka is:unresolved) per project in the past 1h
 - `sentry_issues`: Gauge Histogram of open issues split into 3 buckets: 1h, 24h, and 14d
 - `sentry_events`: Total events counts per project
-- `sentry_rate_limit_second`: Result of rate limit of events per project in second
+- `sentry_rate_limit_second`: Rate limit of errors per second accepted for a project.
 
 ### Metric Configuration
 By default all metrics are scraped, however, issue, event-related or rate-limit metrics can be disabled by setting the relevant variable to False:
