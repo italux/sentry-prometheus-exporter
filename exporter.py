@@ -33,6 +33,7 @@ def get_metric_config():
     """Get metric scraping options."""
     scrape_issue_metrics = getenv("SENTRY_SCRAPE_ISSUE_METRICS") or "True"
     scrape_events_metrics = getenv("SENTRY_SCRAPE_EVENT_METRICS") or "True"
+    scrape_rate_limit_metrics = getenv("SENTRY_SCRAPE_RATE_LIMIT_METRICS") or "False"
     default_for_time_metrics = "True" if scrape_issue_metrics == "True" else "False"
     get_1h_metrics = getenv("SENTRY_ISSUES_1H") or default_for_time_metrics
     get_24h_metrics = getenv("SENTRY_ISSUES_24H") or default_for_time_metrics
@@ -40,6 +41,7 @@ def get_metric_config():
     return [
         scrape_issue_metrics,
         scrape_events_metrics,
+        scrape_rate_limit_metrics,
         get_1h_metrics,
         get_24h_metrics,
         get_14d_metrics,
