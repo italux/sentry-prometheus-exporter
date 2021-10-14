@@ -1,5 +1,33 @@
 # Changelog
 
+## [v0.5](https://github.com/italux/sentry-prometheus-exporter/tree/v0.5) (2021-10-13)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.4.1...v0.5)
+
+**Implemented enhancements:**
+
+- Client keys rate limit [\#32](https://github.com/italux/sentry-prometheus-exporter/pull/32) ([Set3007](https://github.com/Set3007))
+
+**Fixed bugs:**
+
+- ConnectionResetError: \[Errno 104\] Connection reset by peer [\#8](https://github.com/italux/sentry-prometheus-exporter/issues/8)
+
+**Closed issues:**
+
+- AttributeError: 'str' object has no attribute 'get' [\#16](https://github.com/italux/sentry-prometheus-exporter/issues/16)
+
+## [v0.4.1](https://github.com/italux/sentry-prometheus-exporter/tree/v0.4.1) (2021-10-12)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.4.0...v0.4.1)
+
+**Closed issues:**
+
+- incorrect sentry\_events\_total count [\#27](https://github.com/italux/sentry-prometheus-exporter/issues/27)
+
+**Merged pull requests:**
+
+- pip: bump flask from 2.0.1 to 2.0.2 [\#31](https://github.com/italux/sentry-prometheus-exporter/pull/31) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v0.4.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.4.0) (2021-10-10)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.3.0...v0.4.0)
@@ -11,7 +39,6 @@
 
 **Closed issues:**
 
-- incorrect sentry\_events\_total count [\#27](https://github.com/italux/sentry-prometheus-exporter/issues/27)
 - Not correctly managing project list pagination. [\#29](https://github.com/italux/sentry-prometheus-exporter/issues/29)
 
 **Merged pull requests:**
