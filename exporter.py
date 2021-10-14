@@ -114,7 +114,8 @@ if __name__ == "__main__":
                 user=EXPORTER_BASIC_AUTH_USER,
                 pwd=EXPORTER_BASIC_AUTH_PASS[
                     # showing only half of the password characters to help debug
-                    : len(EXPORTER_BASIC_AUTH_PASS) - int(len(EXPORTER_BASIC_AUTH_PASS) / 2)
+                    : len(EXPORTER_BASIC_AUTH_PASS)
+                    - int(len(EXPORTER_BASIC_AUTH_PASS) / 2)
                 ],
             )
         )
