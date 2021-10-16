@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased](https://github.com/italux/sentry-prometheus-exporter/tree/HEAD)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.6.0...HEAD)
+
+**Closed issues:**
+
+- Password protection via HTTP basic auth or custom header [\#17](https://github.com/italux/sentry-prometheus-exporter/issues/17)
+
+## [v0.6.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.6.0) (2021-10-16)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.5...v0.6.0)
+
+**Implemented enhancements:**
+
+- Password protection via HTTP basic authentication [\#34](https://github.com/italux/sentry-prometheus-exporter/pull/34) ([italux](https://github.com/italux))
+
 ## [v0.5](https://github.com/italux/sentry-prometheus-exporter/tree/v0.5) (2021-10-13)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.4.1...v0.5)
