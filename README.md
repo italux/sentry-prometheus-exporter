@@ -12,13 +12,14 @@
     + [Run](#run)
     + [Docker](#docker)
     + [Samples](#samples)
-  * [Important Notes](#important-notes)
-    + [Limitations](#limitations)
-    + [Sentry API retry calls](#sentry-api-retry-calls)
-    + [Recomendations & Tips](#recomendations--tips)
-  * [Documentation](#-documentation)
-  * [Contributing](#-contributing)
-  * [License](#-license)
+  * [Metrics](#metrics)
+    + [Metrics Configuration](#metric-configuration)
+    + [Basic Authentication](#basic-authentication)
+  * [Limitations](#limitations)
+  * [Recomendations & Tips](#recomendations--tips)
+  * [Documentation](#documentation)
+  * [Contributing](#contributing)
+  * [License](#license)
   * [Show your support](#show-your-support)
   * [Author](#author)
 
@@ -90,6 +91,35 @@ export SENTRY_ISSUES_14D=False
 ```
 As with `SENTRY_AUTH_TOKEN`, all of these variables can be passed in through the `docker run -e VAR_NAME=<>` command or via the `.env` file if using Docker Compose.
 
+### Basic Authentication
+
+Security is always a concern and metrics can contain sensitive information that you'd like to protect and [HTTP Basic authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) is the most simple standard that uses fields in the HTTP header to restrict access to a specific URL.
+
+To enable the basic authentication mechanism on Sentry Prometheus Exporter you just need to export the `SENTRY_EXPORTER_BASIC_AUTH` and configure the credentials as follows
+
+#### Credentials configurations
+
+|  Environment variable              | Value type | Default value |                         Purpose                         |
+|:----------------------------------:|:----------:|:-------------:|:-------------------------------------------------------:|
+| `SENTRY_EXPORTER_BASIC_AUTH`       | Integer    | prometheus    | How many retries should be made in case of an exception |
+| `SENTRY_EXPORTER_BASIC_AUTH_USER`  | Integer    | prometheus    | How many retries should be made in case of an exception |
+| `SENTRY_EXPORTER_BASIC_AUTH_PASS`  | Float      | prometheus    | How many seconds to wait between retries                |
+
+
+Once enable, the `/metrics/` page will prompt `username` & `password` window
+
+<img src="samples/basic_auth.png" width="500">
+
+#### Prometheus configuration
+
+If you enable the exporter HTTP basic authentication you'l need to configure prometheus scrape to pass the username & password defined on every scrape, please check prometheus [`<scrape_config>`](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config) for more information.
+
+```
+basic_auth:
+  [ username: <string> ]
+  [ password: <secret> ]
+```
+
 ## Samples
 
 **Grafana Dashboard**
@@ -106,24 +136,20 @@ scrape_configs:
     scrape_timeout: 4m
 ```
 
-## ℹ️ Important Notes
-
-### Limitations
+## Limitations
 - **Performance**: The exporter is serial, if your organization has a high number of issues & events you may experience `Context Deadline Exceeded` error during a Prometheus scrape
 
-### Sentry API retry calls
+- **Sentry API retry calls**: The Sentry API limits the rate of requests to 3 per second, so the exporter retries on an HTTP exception.
 
-The Sentry API limits the rate of requests to 3 per second, so the exporter retries on an HTTP exception.
+  You can tweak retry settings with environment variables, though default settings should work:
 
-You can tweak retry settings with environment variables, though default settings should work:
-
-|  Environment variable    | Value type | Default value |                         Purpose                         |
-|:------------------------:|:----------:|:-------------:|:-------------------------------------------------------:|
-| `SENTRY_RETRY_TRIES`     | Integer    | 3             | How many retries should be made in case of an exception |
-| `SENTRY_RETRY_DELAY`     | Float      | 1             | How many seconds to wait between retries                |
-| `SENTRY_RETRY_MAX_DELAY` | Float      | 10            | Max delay to wait between retries                       |
-| `SENTRY_RETRY_BACKOFF`   | Float      | 2             | Multiplier applied to delay between attempts            |
-| `SENTRY_RETRY_JITTER`    | Float      | 0.5           | Extra seconds added to delay between attempts           |
+  |  Environment variable    | Value type | Default value |                         Purpose                         |
+  |:------------------------:|:----------:|:-------------:|:-------------------------------------------------------:|
+  | `SENTRY_RETRY_TRIES`     | Integer    | 3             | How many retries should be made in case of an exception |
+  | `SENTRY_RETRY_DELAY`     | Float      | 1             | How many seconds to wait between retries                |
+  | `SENTRY_RETRY_MAX_DELAY` | Float      | 10            | Max delay to wait between retries                       |
+  | `SENTRY_RETRY_BACKOFF`   | Float      | 2             | Multiplier applied to delay between attempts            |
+  | `SENTRY_RETRY_JITTER`    | Float      | 0.5           | Extra seconds added to delay between attempts           |
 
 ### Recomendations & Tips
 - Use `scrape_interval: 5m` minimum.
