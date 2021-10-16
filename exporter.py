@@ -1,7 +1,6 @@
 import logging
 from os import getenv
 from time import sleep
-from distutils.util import strtobool
 from wsgiref.simple_server import make_server
 
 from flask import Flask
