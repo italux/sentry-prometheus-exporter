@@ -14,6 +14,7 @@
   * [Docker](#docker)
   * [Samples](#samples)
 * [Metrics](#metrics)
+  * [Project Configuration](#project-configuration)
   * [Metrics Configuration](#metric-configuration)
   * [Basic Authentication](#basic-authentication)
 * [Limitations](#limitations)
@@ -85,6 +86,14 @@ docker-compose up -d
 * `sentry_events`: Total events counts per project
 * `sentry_rate_limit_events_sec`: Rate limit of errors per second accepted for a project.
 
+### Project Configuration
+
+By default, sentry's API will be polled to retrieve all projects. If you wish for specific projects to be scraped, you can do the following:
+
+```sh
+export SENTRY_EXPORTER_PROJECTS="project1,project2,project3"
+```
+
 ### Metric Configuration
 
 Excepting rate-limit-events metric, by default all metrics are scraped, however, issue or event-related metrics can be disabled by setting the relevant variable to False:
@@ -109,14 +118,6 @@ export SENTRY_ISSUES_14D=False
 ```
 
 As with `SENTRY_AUTH_TOKEN`, all of these variables can be passed in through the `docker run -e VAR_NAME=<>` command or via the `.env` file if using Docker Compose.
-
-### Project Configuration
-
-By default, sentry's API will be polled to retrieve all projects. If you wish for specific projects to be scraped, you can do the following:
-
-```sh
-export SENTRY_EXPORTER_PROJECTS="project1,project2,project3"
-```
 
 ### Basic Authentication
 
