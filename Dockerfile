@@ -4,11 +4,13 @@ LABEL description="Sentry Issues & Events Exporter"
 
 WORKDIR /app
 
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 COPY helpers/ /app/helpers/
 COPY libs/ /app/libs/
-COPY exporter.py requirements.txt /app/
+COPY exporter.py /app/
 
-RUN pip install -r requirements.txt
 
 USER nobody
 
