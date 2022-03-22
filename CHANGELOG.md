@@ -1,20 +1,31 @@
 # Changelog
 
+## [v0.7.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.7.0) (2022-03-22)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.6.0...v0.7.0)
+
+**Closed issues:**
+
+- Password protection via HTTP basic auth or custom header [\#17](https://github.com/italux/sentry-prometheus-exporter/issues/17)
+
+**Merged pull requests:**
+
+- Improve Dockerfile [\#45](https://github.com/italux/sentry-prometheus-exporter/pull/45) ([deronnax](https://github.com/deronnax))
+- pip: bump requests from 2.26.0 to 2.27.1 [\#42](https://github.com/italux/sentry-prometheus-exporter/pull/42) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Fix and improve readme [\#40](https://github.com/italux/sentry-prometheus-exporter/pull/40) ([kutysam](https://github.com/kutysam))
+- pip: bump flask-httpauth from 4.4.0 to 4.5.0 [\#37](https://github.com/italux/sentry-prometheus-exporter/pull/37) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v0.6.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.6.0) (2021-10-16)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.5...v0.6.0)
 
-**Implemented enhancements:**
+**Merged pull requests:**
 
 - Password protection via HTTP basic authentication [\#34](https://github.com/italux/sentry-prometheus-exporter/pull/34) ([italux](https://github.com/italux))
 
 ## [v0.5](https://github.com/italux/sentry-prometheus-exporter/tree/v0.5) (2021-10-13)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.4.1...v0.5)
-
-**Implemented enhancements:**
-
-- Client keys rate limit [\#32](https://github.com/italux/sentry-prometheus-exporter/pull/32) ([Set3007](https://github.com/Set3007))
 
 **Fixed bugs:**
 
@@ -24,6 +35,10 @@
 
 - AttributeError: 'str' object has no attribute 'get' [\#16](https://github.com/italux/sentry-prometheus-exporter/issues/16)
 
+**Merged pull requests:**
+
+- Client keys rate limit [\#32](https://github.com/italux/sentry-prometheus-exporter/pull/32) ([Set3007](https://github.com/Set3007))
+
 ## [v0.4.1](https://github.com/italux/sentry-prometheus-exporter/tree/v0.4.1) (2021-10-12)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.4.0...v0.4.1)
@@ -31,10 +46,6 @@
 **Closed issues:**
 
 - incorrect sentry\_events\_total count [\#27](https://github.com/italux/sentry-prometheus-exporter/issues/27)
-
-**Merged pull requests:**
-
-- pip: bump flask from 2.0.1 to 2.0.2 [\#31](https://github.com/italux/sentry-prometheus-exporter/pull/31) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [v0.4.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.4.0) (2021-10-10)
 
@@ -51,6 +62,7 @@
 
 **Merged pull requests:**
 
+- pip: bump flask from 2.0.1 to 2.0.2 [\#31](https://github.com/italux/sentry-prometheus-exporter/pull/31) ([dependabot[bot]](https://github.com/apps/dependabot))
 - fix\(sentry\): projects pagination [\#30](https://github.com/italux/sentry-prometheus-exporter/pull/30) ([NMFR](https://github.com/NMFR))
 
 ## [v0.3.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.3.0) (2021-09-21)
@@ -97,7 +109,7 @@
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.1.1...v0.2)
 
-**Implemented enhancements:**
+**Merged pull requests:**
 
 - Allow for user configuration of required metrics [\#10](https://github.com/italux/sentry-prometheus-exporter/pull/10) ([bmistry12](https://github.com/bmistry12))
 
