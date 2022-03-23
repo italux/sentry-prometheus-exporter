@@ -5,15 +5,17 @@ from wsgiref.simple_server import make_server
 
 from flask import Flask
 from flask_httpauth import HTTPBasicAuth
-from prometheus_client import make_wsgi_app, start_http_server
+from flask_healthz import healthz
+from prometheus_client import make_wsgi_app
 from prometheus_client.core import REGISTRY
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
-from werkzeug.serving import run_simple
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from helpers.prometheus import SentryCollector, clean_registry
 from libs.sentry import SentryAPI
 
+# TODO - Move these settings to use Flask Ccnfiguration Handling
+# https://flask.palletsprojects.com/en/2.0.x/config/
 DEFAULT_BASE_URL = "https://sentry.io/api/0/"
 BASE_URL = getenv("SENTRY_BASE_URL") or DEFAULT_BASE_URL
 AUTH_TOKEN = getenv("SENTRY_AUTH_TOKEN")
@@ -25,14 +27,23 @@ EXPORTER_BASIC_AUTH_PASS = getenv("SENTRY_EXPORTER_BASIC_AUTH_PASS") or "prometh
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
 
 log = logging.getLogger("exporter")
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
 level = logging.getLevelName(LOG_LEVEL)
 logging.basicConfig(
     level=logging.getLevelName(level),
-    format="%(asctime)s - %(process)d - %(levelname)s - %(name)s - %(message)s",
+    format="[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S %z",
 )
 
-
 app = Flask(__name__)
+app.register_blueprint(healthz, url_prefix="/healthz")
+app.logger.handlers.extend(gunicorn_error_logger.handlers)
+
+app.config["HEALTHZ"] = {
+    "live": "helpers.utils.liveness",
+    "ready": "helpers.utils.readiness",
+}
+
 auth = HTTPBasicAuth()
 
 users = {
@@ -98,7 +109,6 @@ if __name__ == "__main__":
         log.error("ENVs: SENTRY_AUTH_TOKEN or SENTRY_EXPORTER_ORG was not found!")
         exit(1)
 
-    log.info("Starting simple wsgi server...")
     log.info("auth: basic authentication enabled: {}".format(EXPORTER_BASIC_AUTH))
 
     if (
@@ -118,7 +128,3 @@ if __name__ == "__main__":
                 ],
             )
         )
-
-    # The binding port was picked from the Default port allocations documentation:
-    # https://github.com/prometheus/prometheus/wiki/Default-port-allocations
-    run_simple(hostname="0.0.0.0", port=9790, application=app.wsgi_app)
