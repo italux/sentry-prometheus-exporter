@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.8.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.8.0) (2022-03-23)
+
+[Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.7.0...v0.8.0)
+
+**Closed issues:**
+
+- healthz endpoint [\#43](https://github.com/italux/sentry-prometheus-exporter/issues/43)
+
+**Merged pull requests:**
+
+- Add liveness / readiness endpoints [\#48](https://github.com/italux/sentry-prometheus-exporter/pull/48) ([italux](https://github.com/italux))
+- pip: bump flask from 2.0.2 to 2.0.3 [\#46](https://github.com/italux/sentry-prometheus-exporter/pull/46) ([dependabot[bot]](https://github.com/apps/dependabot))
+- pip: bump prometheus-client from 0.11.0 to 0.13.1 [\#44](https://github.com/italux/sentry-prometheus-exporter/pull/44) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v0.7.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.7.0) (2022-03-22)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.6.0...v0.7.0)
@@ -14,6 +28,7 @@
 - pip: bump requests from 2.26.0 to 2.27.1 [\#42](https://github.com/italux/sentry-prometheus-exporter/pull/42) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Fix and improve readme [\#40](https://github.com/italux/sentry-prometheus-exporter/pull/40) ([kutysam](https://github.com/kutysam))
 - pip: bump flask-httpauth from 4.4.0 to 4.5.0 [\#37](https://github.com/italux/sentry-prometheus-exporter/pull/37) ([dependabot[bot]](https://github.com/apps/dependabot))
+- fix\(sentry\): projects pagination [\#30](https://github.com/italux/sentry-prometheus-exporter/pull/30) ([NMFR](https://github.com/NMFR))
 
 ## [v0.6.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.6.0) (2021-10-16)
 
@@ -47,6 +62,10 @@
 
 - incorrect sentry\_events\_total count [\#27](https://github.com/italux/sentry-prometheus-exporter/issues/27)
 
+**Merged pull requests:**
+
+- pip: bump flask from 2.0.1 to 2.0.2 [\#31](https://github.com/italux/sentry-prometheus-exporter/pull/31) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v0.4.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.4.0) (2021-10-10)
 
 [Full Changelog](https://github.com/italux/sentry-prometheus-exporter/compare/v0.3.0...v0.4.0)
@@ -59,11 +78,6 @@
 **Closed issues:**
 
 - Not correctly managing project list pagination. [\#29](https://github.com/italux/sentry-prometheus-exporter/issues/29)
-
-**Merged pull requests:**
-
-- pip: bump flask from 2.0.1 to 2.0.2 [\#31](https://github.com/italux/sentry-prometheus-exporter/pull/31) ([dependabot[bot]](https://github.com/apps/dependabot))
-- fix\(sentry\): projects pagination [\#30](https://github.com/italux/sentry-prometheus-exporter/pull/30) ([NMFR](https://github.com/NMFR))
 
 ## [v0.3.0](https://github.com/italux/sentry-prometheus-exporter/tree/v0.3.0) (2021-09-21)
 
