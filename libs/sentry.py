@@ -164,7 +164,12 @@ class SentryAPI(object):
             A dict([list])
         """
 
-        first_day_month = datetime.timestamp(datetime.today().replace(day=1))
+        first_day_month = datetime.timestamp(
+            datetime.combine(
+                datetime.today().replace(day=1),
+                datetime.min.time()
+            )
+        )
         today = datetime.timestamp(datetime.today())
         stat_names = ["received", "rejected", "blacklisted"]
         stats = {}
