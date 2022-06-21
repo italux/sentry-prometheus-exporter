@@ -117,6 +117,13 @@ export SENTRY_ISSUES_24H=False
 export SENTRY_ISSUES_14D=False
 ```
 
+
+You can export Performance metrics for project and environments:
+
+```sh
+export SENTRY_SCRAPE_PERFORMANCE_METRICS=True
+```
+
 As with `SENTRY_AUTH_TOKEN`, all of these variables can be passed in through the `docker run -e VAR_NAME=<>` command or via the `.env` file if using Docker Compose.
 
 ### Basic Authentication

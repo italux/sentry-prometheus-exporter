@@ -296,6 +296,42 @@ class SentryAPI(object):
             resp = self.__get(events_url)
             return {"all": resp.json()}
 
+    def eventsv2(self, org_slug, project, environment=None, age="24h"):
+        """Return a list of performance events bound to a project.
+
+        Retrieves the first 100 new events, using the default query sorted by Last Seen events
+
+        Args:
+            org_slug: A organization slug string name.
+            project: dict instance of a project.
+            environments: Optional;
+                A sequence of strings representing the environment names.
+
+        Returns:
+            A list mapping with all project's corresponding performance events and each element is a dict.
+
+        Raises:
+            TypeError: An error occurred if the project instance isn't a valid dict
+        """
+
+        if not isinstance(project, dict):
+            raise TypeError("project param isn't a dictionary")
+
+        eventsv2_url = "organizations/{org}/eventsv2/?field=team_key_transaction&field=transaction&field=project&field=tpm%28%29&field=p50%28%29&field=p95%28%29&field=failure_rate%28%29&field=apdex%28%29&field=count_unique%28user%29&field=count_miserable%28user%29&field=user_misery%28%29&metricsEnhanced=1&project={proj_id}&sort=-team_key_transaction&sort=-tpm&statsPeriod={age}".format(
+            org=org_slug,
+            proj_id=project.get("id"),
+            age=age,
+        )
+        if environment:
+            events = {}
+            eventsv2_url = eventsv2_url + "&environment={env}".format(env=environment)
+            resp = self.__get(eventsv2_url)
+            events[environment] = resp.json()
+            return events
+        else:
+            resp = self.__get(eventsv2_url)
+            return {"all": resp.json()}
+
     def issue_events(self, issue_id, environment=None):
         """This method lists issue's events."""
 
