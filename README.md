@@ -124,6 +124,15 @@ You can export Performance metrics for project and environments:
 export SENTRY_SCRAPE_PERFORMANCE_METRICS=True
 ```
 
+You can specify project setting for performance metrics:
+
+```sh
+export SENTRY_SCRAPE_PERFORMANCE_METRICS_project_slug_QUERY="transaction.duration:<15m event.type:transaction transaction.op:pageload"
+export SENTRY_SCRAPE_PERFORMANCE_METRICS_project_slug_FIELDS="tpm(),p50(),p95(),p75(measurements.fp),p75(measurements.fcp),p75(measurements.lcp),p75(measurements.fid),p75(measurements.cls),p75(measurements.ttfb),failure_rate(),apdex(),count_unique(user),count_miserable(user),user_misery()"
+export SENTRY_SCRAPE_PERFORMANCE_METRICS_project_slug_SORT="-team_key_transaction,-tpm"
+export SENTRY_SCRAPE_PERFORMANCE_METRICS_project_slug_PERIOD="24h"
+```
+
 As with `SENTRY_AUTH_TOKEN`, all of these variables can be passed in through the `docker run -e VAR_NAME=<>` command or via the `.env` file if using Docker Compose.
 
 ### Basic Authentication
