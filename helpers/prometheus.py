@@ -143,6 +143,10 @@ class SentryCollector(object):
                 org=self.org.get("slug")
             )
         )
+
+        """
+        Create settings for project performance metrics
+        """
         for project in projects:
             projects_settings[project.get("slug")] = {}
             projects_settings[project.get("slug")]["query"] = (
@@ -454,6 +458,9 @@ class SentryCollector(object):
                     )
                 envs.append(None)
                 for env in envs:
+                    """
+                    Creating URT  with request. Add default fields: team_key_transaction, transaction for navigations
+                    """
                     performance_events = self.__sentry_api.eventsv2(
                         self.org.get("slug"),
                         project,

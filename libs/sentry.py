@@ -325,7 +325,6 @@ class SentryAPI(object):
 
         if not isinstance(project, dict):
             raise TypeError("project param isn't a dictionary")
-
         eventsv2_url = "organizations/{org}/eventsv2/?metricsEnhanced=1&project={proj_id}&query={query}&statsPeriod={age}{sort}{fields}".format(
             org=org_slug,
             proj_id=project.get("id"),
