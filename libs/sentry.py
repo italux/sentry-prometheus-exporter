@@ -296,7 +296,16 @@ class SentryAPI(object):
             resp = self.__get(events_url)
             return {"all": resp.json()}
 
-    def eventsv2(self, org_slug, project, environment=None, age="24h"):
+    def eventsv2(
+        self,
+        org_slug,
+        project,
+        environment=None,
+        age="24h",
+        query="transaction.duration:<15m event.type:transaction",
+        fields=[],
+        sort=[],
+    ):
         """Return a list of performance events bound to a project.
 
         Retrieves the first 100 new events, using the default query sorted by Last Seen events
@@ -317,10 +326,13 @@ class SentryAPI(object):
         if not isinstance(project, dict):
             raise TypeError("project param isn't a dictionary")
 
-        eventsv2_url = "organizations/{org}/eventsv2/?field=team_key_transaction&field=transaction&field=project&field=tpm%28%29&field=p50%28%29&field=p95%28%29&field=failure_rate%28%29&field=apdex%28%29&field=count_unique%28user%29&field=count_miserable%28user%29&field=user_misery%28%29&metricsEnhanced=1&project={proj_id}&sort=-team_key_transaction&sort=-tpm&statsPeriod={age}".format(
+        eventsv2_url = "organizations/{org}/eventsv2/?metricsEnhanced=1&project={proj_id}&query={query}&statsPeriod={age}{sort}{fields}".format(
             org=org_slug,
             proj_id=project.get("id"),
             age=age,
+            query=requests.utils.quote(query),
+            sort="".join(map(lambda x: "&sort={}".format(requests.utils.quote(x)), sort)),
+            fields="".join(map(lambda x: "&field={}".format(requests.utils.quote(x)), fields)),
         )
         if environment:
             events = {}

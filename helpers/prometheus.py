@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
+from os import getenv
 
 from prometheus_client.core import (
     REGISTRY,
@@ -102,6 +103,7 @@ class SentryCollector(object):
         projects_slug = []
         projects_envs = {}
         projects = []
+        projects_settings = {}
         self.org = self.__sentry_api.get_org(self.sentry_org_slug)
         log.info("metadata: sentry organization: {org}".format(org=self.org.get("slug")))
 
@@ -136,6 +138,36 @@ class SentryCollector(object):
                 "metadata: projects loaded from API: {num_proj}".format(num_proj=len(projects))
             )
 
+        log.info(
+            "metadata: load project setting for organization: {org}".format(
+                org=self.org.get("slug")
+            )
+        )
+        for project in projects:
+            projects_settings[project.get("slug")] = {}
+            projects_settings[project.get("slug")]["query"] = (
+                getenv("SENTRY_SCRAPE_PERFORMANCE_METRICS_{}_QUERY".format(project.get("slug")))
+                or "transaction.duration:<15m event.type:transaction transaction.op:pageload"
+            )
+            projects_settings[project.get("slug")]["fields"] = (
+                getenv("SENTRY_SCRAPE_PERFORMANCE_METRICS_{}_FIELDS".format(project.get("slug")))
+                or "tpm(),p50(),p95(),p75(measurements.fp),p75(measurements.fcp),p75(measurements.lcp),p75(measurements.fid),p75(measurements.cls),p75(measurements.ttfb),failure_rate(),apdex(),count_unique(user),count_miserable(user),user_misery()"
+            )
+            projects_settings[project.get("slug")]["sort"] = (
+                getenv("SENTRY_SCRAPE_PERFORMANCE_METRICS_{}_SORT".format(project.get("slug")))
+                or "-team_key_transaction,-tpm"
+            )
+            projects_settings[project.get("slug")]["fields"] = projects_settings[
+                project.get("slug")
+            ]["fields"].split(",")
+            projects_settings[project.get("slug")]["sort"] = projects_settings[
+                project.get("slug")
+            ]["sort"].split(",")
+            projects_settings[project.get("slug")]["period"] = (
+                getenv("SENTRY_SCRAPE_PERFORMANCE_METRICS_{}_PERIOD".format(project.get("slug")))
+                or "24h"
+            )
+
         log.debug("metadata: building projects metadata structure")
         data = {
             "metadata": {
@@ -143,8 +175,10 @@ class SentryCollector(object):
                 "projects": projects,
                 "projects_slug": projects_slug,
                 "projects_envs": projects_envs,
+                "project_settings": projects_settings,
             }
         }
+
         if self.issue_metrics == "True":
             __metadata = data.get("metadata")
 
@@ -400,38 +434,34 @@ class SentryCollector(object):
 
         if self.performance_metrics == "True":
             log.info("collector: loading performance metrics")
-            project_performance_metrics_tpm = GaugeMetricFamily(
-                "sentry_performance_events_tpm",
-                "Performance metrics for a project - tpm",
-                labels=["project_slug", "environment", "transaction"],
-            )
-
-            project_performance_metrics_users = GaugeMetricFamily(
-                "sentry_performance_events_unique_user",
-                "Performance metrics for a project - uniq users",
-                labels=["project_slug", "environment", "transaction"],
-            )
-            project_performance_metrics_failure_rate = GaugeMetricFamily(
-                "sentry_performance_events_failure_rate",
-                "Performance metrics for a project - failure_rate",
-                labels=["project_slug", "environment", "transaction"],
-            )
-            project_performance_metrics_apdex = GaugeMetricFamily(
-                "sentry_performance_events_apdex",
-                "Performance metrics for a project - apdex",
-                labels=["project_slug", "environment", "transaction"],
-            )
-            project_performance_metrics_percentile = GaugeMetricFamily(
-                "sentry_performance_events_percentile",
-                "Performance metrics for a project - percentile",
-                labels=["project_slug", "environment", "transaction", "percentile"],
-            )
             for project in __metadata.get("projects"):
                 envs = __metadata.get("projects_envs").get(project.get("slug"))
+                settings = __metadata.get("project_settings").get(project.get("slug"))
+                metrics = {}
+                for field in settings.get("fields"):
+                    fieldName = (
+                        field.replace("(", "_").replace(")", "_").replace(".", "_").strip("_")
+                    )
+                    log.debug(
+                        "collector: creating performance metrics {} for {}".format(
+                            fieldName, project.get("slug")
+                        )
+                    )
+                    metrics[fieldName] = GaugeMetricFamily(
+                        "sentry_performance_events_{}".format(fieldName),
+                        "Performance metrics for a project - {}".format(fieldName),
+                        labels=["project_slug", "environment", "transaction"],
+                    )
                 envs.append(None)
                 for env in envs:
                     performance_events = self.__sentry_api.eventsv2(
-                        self.org.get("slug"), project, env
+                        self.org.get("slug"),
+                        project,
+                        env,
+                        age=settings.get("period"),
+                        query=settings.get("query"),
+                        fields=settings.get("fields") + ["team_key_transaction", "transaction"],
+                        sort=settings.get("sort"),
                     )
                     if not env:
                         env = "all"
@@ -441,58 +471,22 @@ class SentryCollector(object):
                         )
                     )
                     for performance_event in performance_events[env]["data"]:
-                        project_performance_metrics_tpm.add_metric(
-                            [
-                                str(project.get("slug")),
-                                env,
-                                performance_event["transaction"],
-                            ],
-                            performance_event["tpm"],
-                        )
-                        project_performance_metrics_users.add_metric(
-                            [
-                                str(project.get("slug")),
-                                env,
-                                performance_event["transaction"],
-                            ],
-                            performance_event["count_unique_user"],
-                        )
-                        project_performance_metrics_failure_rate.add_metric(
-                            [
-                                str(project.get("slug")),
-                                env,
-                                performance_event["transaction"],
-                            ],
-                            performance_event["failure_rate"],
-                        )
-                        project_performance_metrics_apdex.add_metric(
-                            [
-                                str(project.get("slug")),
-                                env,
-                                performance_event["transaction"],
-                            ],
-                            performance_event["apdex"],
-                        )
-                        project_performance_metrics_percentile.add_metric(
-                            [
-                                str(project.get("slug")),
-                                env,
-                                performance_event["transaction"],
-                                "p50",
-                            ],
-                            float(performance_event["p50"]) / 1000.0,
-                        )
-                        project_performance_metrics_percentile.add_metric(
-                            [
-                                str(project.get("slug")),
-                                env,
-                                performance_event["transaction"],
-                                "p95",
-                            ],
-                            float(performance_event["p95"]) / 1000.0,
-                        )
-            yield project_performance_metrics_tpm
-            yield project_performance_metrics_users
-            yield project_performance_metrics_failure_rate
-            yield project_performance_metrics_apdex
-            yield project_performance_metrics_percentile
+                        for metric in metrics.keys():
+                            log.debug(
+                                "collector: populating performance metrics {} for {} env {}".format(
+                                    metric, project.get("slug"), env
+                                )
+                            )
+                            data = 0.0
+                            if performance_event[metric]:
+                                data = performance_event[metric]
+                            metrics[metric].add_metric(
+                                [
+                                    str(project.get("slug")),
+                                    env,
+                                    performance_event["transaction"],
+                                ],
+                                data,
+                            )
+            for field in metrics.keys():
+                yield metrics[field]
