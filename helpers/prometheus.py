@@ -152,6 +152,7 @@ class SentryCollector(object):
             for project in __metadata.get("projects"):
                 projects_issue_data[project.get("slug")] = {}
                 envs = __metadata.get("projects_envs").get(project.get("slug"))
+                envs = envs if envs else [None]
                 for env in envs:
                     project_issues_1h = project_issues_24h = project_issues_14d = {}
                     if self.get_1h_metrics == "True":
@@ -305,10 +306,33 @@ class SentryCollector(object):
             for project in __metadata.get("projects"):
                 envs = __metadata.get("projects_envs").get(project.get("slug"))
                 project_issues = __projects_data.get(project.get("slug"))
+                envs = envs if envs else [None]
                 for env in envs:
-                    project_issues_1h = project_issues.get(env).get("1h")
+                    project_issues_1h = (
+                        project_issues.get(env).get("1h")
+                        if env
+                        else project_issues.get("all").get("1h")
+                    )
                     for issue in project_issues_1h:
                         release = self.__sentry_api.issue_release(issue.get("id"), env)
+                        first_seen = (
+                            datetime.strptime(str(issue.get("firstSeen")), "%Y-%m-%dT%H:%M:%SZ")
+                            if len(str(issue.get("firstSeen"))) == 20
+                            else datetime.strptime(
+                                str(issue.get("firstSeen")), "%Y-%m-%dT%H:%M:%S.%fZ"
+                            )
+                            if issue.get("firstSeen")
+                            else datetime.now()
+                        )
+                        last_seen = (
+                            datetime.strptime(str(issue.get("lastSeen")), "%Y-%m-%dT%H:%M:%SZ")
+                            if len(str(issue.get("lastSeen"))) == 20
+                            else datetime.strptime(
+                                str(issue.get("lastSeen")), "%Y-%m-%dT%H:%M:%S.%fZ"
+                            )
+                            if issue.get("lastSeen")
+                            else datetime.now()
+                        )
                         issues_metrics.add_metric(
                             [
                                 str(issue.get("id")),
@@ -322,33 +346,13 @@ class SentryCollector(object):
                                 str(issue.get("isUnhandled")),
                                 str(
                                     datetime.strftime(
-                                        datetime.strptime(
-                                            str(
-                                                issue.get("firstSeen")
-                                                # if the issue age is recent, firstSeen returns None
-                                                # and we'll return datetime.now() as default
-                                                or datetime.strftime(
-                                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
-                                                )
-                                            ),
-                                            "%Y-%m-%dT%H:%M:%SZ",
-                                        ),
+                                        first_seen,
                                         "%Y-%m-%d",
                                     )
                                 ),
                                 str(
                                     datetime.strftime(
-                                        datetime.strptime(
-                                            str(
-                                                issue.get("lastSeen")
-                                                # if the issue age is recent, lastSeen returns None
-                                                # and we'll return datetime.now() as default
-                                                or datetime.strftime(
-                                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
-                                                )
-                                            ),
-                                            "%Y-%m-%dT%H:%M:%SZ",
-                                        ),
+                                        last_seen,
                                         "%Y-%m-%d",
                                     )
                                 ),

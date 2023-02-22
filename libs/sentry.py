@@ -317,20 +317,19 @@ class SentryAPI(object):
         """This method lists issue's events."""
 
         issue_release_url = "issues/{issue_id}/current-release/".format(issue_id=issue_id)
+        issue_release_url = (
+            issue_release_url + "?environment={env}".format(env=environment)
+            if environment
+            else issue_release_url
+        )
 
-        if environment:
-            issue_release_url = issue_release_url + "?environment={env}".format(env=environment)
-            resp = self.__get(issue_release_url)
-            curr_release = resp.json().get("currentRelease")
-            if curr_release:
-                release = curr_release.get("release").get("version")
-                return release
-            else:
-                return curr_release
-        else:
-            resp = self.__get(issue_release_url)
-            release = resp.json().get("currentRelease").get("release").get("version")
+        resp = self.__get(issue_release_url)
+        curr_release = resp.json().get("currentRelease")
+        if curr_release:
+            release = curr_release.get("release").get("version")
             return release
+        else:
+            return curr_release
 
     def project_releases(self, org_slug, project, environment=None):
         """Return a list of releases for a given project into the organization.
