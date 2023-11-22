@@ -17,16 +17,6 @@ DEFAULT_CACHE_EXPIRE_TIMESTAMP = int(datetime.timestamp(datetime.now() + timedel
 
 log = logging.getLogger(__name__)
 
-
-def clean_registry():
-    # Loop with try except to remove all default collectors
-    for _, collector in list(REGISTRY._names_to_collectors.items()):
-        try:
-            REGISTRY.unregister(collector)
-        except KeyError:
-            pass
-
-
 class SentryCollector(object):
     """A simple :class:`SentryCollector <SentryCollector>` returns a list of Metric objects.
 
