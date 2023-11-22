@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from prometheus_client.core import (
-    REGISTRY,
     CounterMetricFamily,
     GaugeHistogramMetricFamily,
     GaugeMetricFamily,
@@ -384,5 +383,5 @@ class SentryCollector(object):
                 project_rate_metrics.add_metric(
                     [str(project.get("slug"))], round(rate_limit_second, 6)
                 )
-
+            print(project_rate_metrics)
             yield project_rate_metrics
