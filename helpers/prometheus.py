@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from prometheus_client.core import (
-    REGISTRY,
     CounterMetricFamily,
     GaugeHistogramMetricFamily,
     GaugeMetricFamily,
@@ -16,15 +15,6 @@ JSON_CACHE_FILE = "/tmp/sentry-prometheus-exporter-cache.json"
 DEFAULT_CACHE_EXPIRE_TIMESTAMP = int(datetime.timestamp(datetime.now() + timedelta(minutes=2)))
 
 log = logging.getLogger(__name__)
-
-
-def clean_registry():
-    # Loop with try except to remove all default collectors
-    for _, collector in list(REGISTRY._names_to_collectors.items()):
-        try:
-            REGISTRY.unregister(collector)
-        except KeyError:
-            pass
 
 
 class SentryCollector(object):
@@ -199,7 +189,6 @@ class SentryCollector(object):
         return data
 
     def __build_sentry_data(self):
-
         data = get_cached(JSON_CACHE_FILE)
 
         if data is False:
