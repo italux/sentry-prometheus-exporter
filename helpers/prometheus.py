@@ -383,5 +383,5 @@ class SentryCollector(object):
                 project_rate_metrics.add_metric(
                     [str(project.get("slug"))], round(rate_limit_second, 6)
                 )
-            print(project_rate_metrics)
+
             yield project_rate_metrics
