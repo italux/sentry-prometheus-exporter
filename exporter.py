@@ -112,7 +112,6 @@ def sentry_exporter():
 
 
 if __name__ == "__main__":
-
     if not ORG_SLUG or not AUTH_TOKEN:
         log.error("ENVs: SENTRY_AUTH_TOKEN or SENTRY_EXPORTER_ORG was not found!")
         exit(1)

@@ -16,6 +16,7 @@ DEFAULT_CACHE_EXPIRE_TIMESTAMP = int(datetime.timestamp(datetime.now() + timedel
 
 log = logging.getLogger(__name__)
 
+
 class SentryCollector(object):
     """A simple :class:`SentryCollector <SentryCollector>` returns a list of Metric objects.
 
@@ -188,7 +189,6 @@ class SentryCollector(object):
         return data
 
     def __build_sentry_data(self):
-
         data = get_cached(JSON_CACHE_FILE)
 
         if data is False:
