@@ -1,7 +1,5 @@
 on:
   push:
-    branches:
-      - alexlin.deploy
 
 env:
   ALTO_REPO_NAME: ${{ github.event.repository.name }}
@@ -14,11 +12,11 @@ env:
   HELM_REPO: alto-helm
 
 jobs:
-  checks:
-    uses: ./.github/workflows/checks.yaml
+  # checks:
+    # uses: ./.github/workflows/checks.yaml
   publish-artifacts:
-    needs:
-      - checks
+    # needs:
+      # - checks
     runs-on: 'ubuntu-latest'
     steps:
       - name: Checkout

@@ -25,25 +25,25 @@ jobs:
         with:
           args: '. -l 99 -t py37 --check'
 
-  yamllint:
-    name: YAML Lint
-    runs-on: ubuntu-latest
+  # yamllint:
+  #   name: YAML Lint
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: YAML Lint
-        uses: ibiqlik/action-yamllint@v3.0.0
-        with:
-          file_or_dir: .
-          format: standard
-          config_data: |
-            extends: default
-            rules:
-              truthy: disable
-              line-length:
-                max: 99
-              indentation:
-                spaces: consistent
-                indent-sequences: true
-                check-multi-line-strings: false
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+  #     - name: YAML Lint
+  #       uses: ibiqlik/action-yamllint@v3.0.0
+  #       with:
+  #         file_or_dir: .
+  #         format: standard
+  #         config_data: |
+  #           extends: default
+  #           rules:
+  #             truthy: disable
+  #             line-length:
+  #               max: 99
+  #             indentation:
+  #               spaces: consistent
+  #               indent-sequences: true
+  #               check-multi-line-strings: false

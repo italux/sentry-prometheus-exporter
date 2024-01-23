@@ -199,7 +199,6 @@ class SentryCollector(object):
         return data
 
     def __build_sentry_data(self):
-
         data = get_cached(JSON_CACHE_FILE)
 
         if data is False:
