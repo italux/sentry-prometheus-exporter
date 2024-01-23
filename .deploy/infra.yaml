@@ -1,0 +1,10 @@
+image:
+  repository: artifactory.infra.alto.com/alto-docker/infra/sentry-prometheus-exporter
+  tag: $DEPLOY_TAG
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+env:
+  SENTRY_EXPORTER_ORG: scriptdash
+  SENTRY_EXPORTER_PROJECTS: scriptdash

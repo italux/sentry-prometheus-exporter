@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sentry-prometheus-exporter
+description: Just In time Provisioning Chart
+type: application
+version: 0.1.0
+appVersion: '0.1.0'

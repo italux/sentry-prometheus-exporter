@@ -1,0 +1,19 @@
+{{- if .Values.metrics.serviceMonitor }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "sentry-prometheus-exporter.fullname" . }}
+  labels:
+    {{- include "sentry-prometheus-exporter.labels" . | nindent 4 }}
+spec:
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.metrics.serviceMonitor.scrapeInterval }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      {{- include "sentry-prometheus-exporter.selectorLabels" . | nindent 6 }}
+{{- end }}

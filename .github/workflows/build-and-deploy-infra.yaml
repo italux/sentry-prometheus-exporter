@@ -1,0 +1,113 @@
+on:
+  push:
+    branches:
+      - alexlin.deploy
+
+env:
+  ALTO_REPO_NAME: ${{ github.event.repository.name }}
+  ALTO_GITHUB_TOKEN: ${{ secrets.ALTO_GITHUB_TOKEN }}
+  REGISTRY: https://artifactory.infra.alto.com/artifactory
+  ALTO_ARTIFACTORY_USER: ${{ secrets.SENTRY_PROMETHEUS_EXPORTER_ARTIFACTORY_USER }}
+  ALTO_ARTIFACTORY_APIKEY: ${{ secrets.SENTRY_PROMETHEUS_EXPORTER_ARTIFACTORY_APIKEY }}
+  CHART_DIR: sentry-prometheus-exporter
+  CHART_NAME: sentry-prometheus-exporter
+  HELM_REPO: alto-helm
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yaml
+  publish-artifacts:
+    needs:
+      - checks
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Set tag variable
+        run: |
+          echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV
+          echo START_TIME=$(($(date +%s%N)/1000000)) >> $GITHUB_ENV
+      - name: set-up-artifactory
+        run: |
+          curl -fL https://getcli.jfrog.io/v2-jf | sh
+          mv jf /usr/local/bin/jf
+          jf config add alto-art --basic-auth-only \
+          --user $ALTO_ARTIFACTORY_USER \
+          --password $ALTO_ARTIFACTORY_APIKEY \
+          --url https://artifactory.infra.alto.com --overwrite
+      - name: setup-helm
+        run: |
+          curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+          sudo apt-get install apt-transport-https --yes
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+          sudo apt-get update
+          sudo apt-get install helm
+      - name: build-and-push-docker
+        run: |
+          docker build . --build-arg GITHUB_TOKEN=${{ env.ALTO_GITHUB_TOKEN }} -t artifactory.infra.alto.com/alto-docker/infra/${{ env.ALTO_REPO_NAME }}:${{ env.RELEASE_VERSION }}
+          jf docker push artifactory.infra.alto.com/alto-docker/infra/${{ env.ALTO_REPO_NAME }}:${{ env.RELEASE_VERSION }} --build-name ${{ env.ALTO_REPO_NAME }} --build-number=${{ env.RELEASE_VERSION }} --module=docker
+      - name: build-and-push-helm
+        run: |
+          cd chart
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add $HELM_REPO $REGISTRY/$HELM_REPO --username $ALTO_ARTIFACTORY_USER --password $ALTO_ARTIFACTORY_APIKEY
+          helm repo update
+          helm dependency build $CHART_DIR
+          helm lint $CHART_DIR
+          helm template $CHART_DIR
+          CHART_VERSION=$(echo "1.0.0-$RELEASE_VERSION")
+          helm package $CHART_DIR --version "$CHART_VERSION"
+          if jf rt s "$HELM_REPO/$CHART_NAME-$CHART_VERSION.tgz" --fail-no-op; then
+            printf "$CHART_NAME-$CHART_VERSION already exist in artifactory $HELM_REPO, exit\n"
+            exit 1
+          else
+            printf "==> Attempting to upload:\n$CHART_NAME-$CHART_VERSION.tgz\n\n"
+            jf rt u $CHART_NAME-$CHART_VERSION.tgz $HELM_REPO \
+            --build-name=${{ env.ALTO_REPO_NAME }} \
+            --build-number=${{ env.RELEASE_VERSION }} \
+            --module=helm-chart \
+            --fail-no-op || exit 1
+          fi
+      - name: publish-build
+        run: |
+          jf rt bag ${{ env.ALTO_REPO_NAME }} ${{ env.RELEASE_VERSION }}
+          BUILD_DURATION=$[$(($(date +%s%N)/1000000))-$START_TIME]
+          echo $BUILD_DURATION
+          GITHUB_WORKFLOW_URL=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          jf rt bp ${{ env.ALTO_REPO_NAME }} ${{ env.RELEASE_VERSION }} --build-url $GITHUB_WORKFLOW_URL --dry-run | jq ".durationMillis += $BUILD_DURATION" | tee build.json
+          curl -u $ALTO_ARTIFACTORY_USER:$ALTO_ARTIFACTORY_APIKEY -X PUT "https://artifactory.infra.alto.com/artifactory/api/build" -H "Content-Type: application/json" --upload-file build.json
+  alto-deploy-infra:
+    needs:
+      - publish-artifacts
+    runs-on: 'ubuntu-latest'
+    container:
+      image: artifactory.infra.alto.com/alto-docker/alto-deploy:latest
+      env:
+        ALTO_DEPLOY_KEY_INFRA: ${{ secrets.ALTO_DEPLOY_KEY_INFRA }}
+        CIRCLE_PROJECT_REPONAME: ${{ env.ALTO_REPO_NAME }}
+        KMS_ACCESS_KEY: ${{ secrets.KMS_ACCESS_KEY }}
+        KMS_SECRET_ACCESS_KEY: ${{ secrets.KMS_SECRET_ACCESS_KEY }}
+        PROM_PUSH_PASS: ${{ secrets.PROM_PUSH_PASS }}
+        PROM_PUSH_URL: ${{ secrets.PROM_PUSH_URL }}
+        PROM_PUSH_USER: ${{ secrets.PROM_PUSH_USER }}
+        RANCHER_ACCESS_KEY: ${{ secrets.RANCHER_ACCESS_KEY }}
+        RANCHER_SECRET_KEY: ${{ secrets.RANCHER_SECRET_KEY }}
+      credentials:
+        username: ${{ env.ALTO_ARTIFACTORY_USER }}
+        password: ${{ env.ALTO_ARTIFACTORY_APIKEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Set tag variable
+        run: |
+          echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV
+          SKIP_SOPS_INSTALL=true helm plugin install https://github.com/jkroepke/helm-secrets
+      - name: deploy
+        env:
+          DEPLOY_TAG: ${{ env.RELEASE_VERSION }}
+        run: |
+          alto-deploy -e infra -r ${{ env.ALTO_REPO_NAME }} -f .deploy/infra.yaml -s .deploy/secrets/secrets.infra.yaml -c alto-artifactory/${{ env.ALTO_REPO_NAME }} -v 1.0.0-${{ env.DEPLOY_TAG }}
