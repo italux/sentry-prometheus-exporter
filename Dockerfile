@@ -1,4 +1,4 @@
-FROM python:3.7-slim
+FROM python:3.13.0a6-slim
 LABEL maintainer="Italo Santos <italux.santos@gmail.com>"
 LABEL description="Sentry Issues & Events Exporter"
 
