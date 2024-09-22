@@ -1,5 +1,5 @@
 Flask==2.2.2
-flask-healthz==0.0.3
+flask-healthz==1.0.1
 Flask-HTTPAuth==4.7.0
 gunicorn==20.1.0
 prometheus-client==0.16.0
