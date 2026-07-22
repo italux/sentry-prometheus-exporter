@@ -13,7 +13,9 @@ COPY exporter.py /app/
 
 USER nobody
 
+ENV GUNICORN_CMD_ARGS="-w 4 -b 0.0.0.0:9790"
+
 # The binding port was picked from the Default port allocations documentation:
 # https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 EXPOSE 9790
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:9790", "exporter:app"]
+CMD ["gunicorn", "exporter:app"]
