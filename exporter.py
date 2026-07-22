@@ -25,6 +25,7 @@ EXPORTER_BASIC_AUTH = getenv("SENTRY_EXPORTER_BASIC_AUTH") or "False"
 EXPORTER_BASIC_AUTH_USER = getenv("SENTRY_EXPORTER_BASIC_AUTH_USER") or "prometheus"
 EXPORTER_BASIC_AUTH_PASS = getenv("SENTRY_EXPORTER_BASIC_AUTH_PASS") or "prometheus"
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
+MAX_COLLECTOR_WORKER = getenv("MAX_COLLECTOR_WORKER", "5")
 
 log = logging.getLogger("exporter")
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
@@ -95,10 +96,10 @@ def home():
 @app.route("/metrics/")
 @auth.login_required(optional=basic_auth_is_enabled(EXPORTER_BASIC_AUTH))
 def sentry_exporter():
-    sentry = SentryAPI(BASE_URL, AUTH_TOKEN)
+    sentry = SentryAPI(BASE_URL, AUTH_TOKEN, max_conn_pool=int(MAX_COLLECTOR_WORKER))
     log.info("exporter: cleaning registry collectors...")
     clean_registry()
-    REGISTRY.register(SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG))
+    REGISTRY.register(SentryCollector(sentry, ORG_SLUG, get_metric_config(), sentry_projects_slug=PROJECTS_SLUG, max_collector_worker=int(MAX_COLLECTOR_WORKER)))
     exporter = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app()})
     return exporter
 
