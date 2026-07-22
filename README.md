@@ -76,6 +76,12 @@ docker-compose build
 echo SENTRY_BASE_URL="https://sentry.io/api/0/"
 echo SENTRY_AUTH_TOKEN="[REPLACE_TOKEN]"
 echo SENTRY_EXPORTER_ORG="[organization_slug]"
+
+# optionally configure collector thread pool count
+echo MAX_COLLECTOR_WORKER=25
+
+# optionally change web server worker's timeout
+echo GUNICORN_CMD_ARGS="--timeout 60 -w 4 -b 0.0.0.0:9790"
 ```
 
 **Start containers**
