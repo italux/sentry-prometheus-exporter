@@ -3,6 +3,7 @@ from os import getenv
 
 from retry import retry
 import requests
+import requests.adapters
 
 retry_settings = {
     "tries": int(getenv("SENTRY_RETRY_TRIES", "3")),
@@ -29,12 +30,17 @@ class SentryAPI(object):
       [{'id': '7446', 'slug': 'loggi', 'name': 'loggi', 'status': 'active'}]
     """
 
-    def __init__(self, base_url, auth_token):
+    def __init__(self, base_url, auth_token, max_conn_pool=None):
         """Inits SentryAPI with base sentry's URL and authentication token."""
         super(SentryAPI, self).__init__()
         self.base_url = base_url
         self.__token = auth_token
         self.__session = requests.Session()
+        if max_conn_pool is not None:
+            # https://laike9m.com/blog/requests-secret-pool_connections-and-pool_maxsize,89/
+            # ^ because we now use multithreading in exporer/collector
+            __request_adapter = requests.adapters.HTTPAdapter(pool_connections=max_conn_pool, pool_maxsize=max_conn_pool)
+            self.__session.mount("https://", __request_adapter)
 
     @retry(requests.exceptions.HTTPError, **retry_settings)
     def __get(self, url):
