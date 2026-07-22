@@ -1,4 +1,5 @@
 import logging
+import concurrent.futures
 from datetime import datetime, timedelta
 from uuid import uuid4
 
@@ -48,6 +49,7 @@ class SentryCollector(object):
         sentry_org_slug,
         metric_scraping_config,
         sentry_projects_slug=None,
+        max_collector_worker=5
     ):
         """Inits SentryCollector with a SentryAPI object"""
         super(SentryCollector, self).__init__()
@@ -60,8 +62,68 @@ class SentryCollector(object):
         self.get_1h_metrics = metric_scraping_config[3]
         self.get_24h_metrics = metric_scraping_config[4]
         self.get_14d_metrics = metric_scraping_config[5]
+        self.max_collector_worker = max_collector_worker
 
-    def __build_sentry_data_from_api(self):
+    def __get_project_and_envs_from_project_slug(self, project_slug, projects, projects_slug, projects_envs):
+        log.debug(
+            "metadata: getting {proj} project data from API".format(proj=project_slug)
+        )
+        project = self.__sentry_api.get_project(self.org.get("slug"), project_slug)
+        projects.append(project)
+        projects_slug.append(project_slug)
+        envs = self.__sentry_api.environments(self.org.get("slug"), project)
+        projects_envs[project.get("slug")] = envs
+
+    def __get_project_and_envs(self, projects, project, projects_slug, projects_envs):
+        log.debug(
+            "metadata: getting projects and its envs data from API"
+        )
+        projects.append(project)
+        projects_slug.append(project.get("slug"))
+        envs = self.__sentry_api.environments(self.org.get("slug"), project)
+        projects_envs[project.get("slug")] = envs
+
+    def __get_project_env_issue_metrics(self, project, env, projects_issue_data):
+        project_issues_1h = project_issues_24h = project_issues_14d = {}
+        if self.get_1h_metrics == "True":
+            log.debug(
+                "metadata: getting issues from api - project: {proj} env: {env} age: 1h".format(
+                    proj=project.get("slug"), env=env
+                )
+            )
+            project_issues_1h = self.__sentry_api.issues(
+                self.org.get("slug"), project, env, age="1h"
+            )
+        if self.get_24h_metrics == "True":
+            log.debug(
+                "metadata: getting issues from api - project: {proj} env: {env} age: 24h".format(
+                    proj=project.get("slug"), env=env
+                )
+            )
+            project_issues_24h = self.__sentry_api.issues(
+                self.org.get("slug"), project, env, age="24h"
+            )
+        if self.get_14d_metrics == "True":
+            log.debug(
+                "metadata: getting issues from api - project: {proj} env: {env} age: 14d".format(
+                    proj=project.get("slug"), env=env
+                )
+            )
+            project_issues_14d = self.__sentry_api.issues(
+                self.org.get("slug"), project, env, age="14d"
+            )
+
+        log.debug("data structure: building projects issues data")
+        for k, v in project_issues_1h.items():
+            projects_issue_data[project.get("slug")][k] = {"1h": v}
+
+        for k, v in project_issues_24h.items():
+            projects_issue_data[project.get("slug")][k].update({"24h": v})
+
+        for k, v in project_issues_14d.items():
+            projects_issue_data[project.get("slug")][k].update({"14d": v})
+
+    def __build_sentry_data_from_api(self, thread_executor=None):
         """Build a local data structure from sentry API calls.
 
         Returns:
@@ -98,6 +160,8 @@ class SentryCollector(object):
                 }
         """
 
+        assert thread_executor is not None
+
         projects_slug = []
         projects_envs = {}
         projects = []
@@ -110,15 +174,26 @@ class SentryCollector(object):
                     num_proj=len(self.sentry_projects_slug.split(","))
                 )
             )
+            __future_get_project_and_envs_from_project_slug = set()
             for project_slug in self.sentry_projects_slug.split(","):
-                log.debug(
-                    "metadata: getting {proj} project data from API".format(proj=project_slug)
+                 __future_get_project_and_envs_from_project_slug.add(
+                    thread_executor.submit(
+                        self.__get_project_and_envs_from_project_slug,
+                        project_slug,
+                        projects,
+                        projects_slug,
+                        projects_envs
+                    )
                 )
-                project = self.__sentry_api.get_project(self.org.get("slug"), project_slug)
-                projects.append(project)
-                projects_slug.append(project_slug)
-                envs = self.__sentry_api.environments(self.org.get("slug"), project)
-                projects_envs[project.get("slug")] = envs
+            finished_tasks, unfinished_tasks = concurrent.futures.wait(
+                __future_get_project_and_envs_from_project_slug,
+                return_when=concurrent.futures.FIRST_EXCEPTION
+            )
+            for finished_task in finished_tasks:
+                err = finished_task.exception()
+                if err is not None:
+                    raise err
+
             log.info(
                 "metadata: projects loaded from API: {num_proj}".format(num_proj=len(projects))
             )
@@ -126,11 +201,25 @@ class SentryCollector(object):
             log.info(
                 "metadata: no projects specified, loading from API".format(num_proj=len(projects))
             )
+            __future_get_project_and_envs = set()
             for project in self.__sentry_api.projects(self.sentry_org_slug):
-                projects.append(project)
-                projects_slug.append(project.get("slug"))
-                envs = self.__sentry_api.environments(self.org.get("slug"), project)
-                projects_envs[project.get("slug")] = envs
+                __future_get_project_and_envs.add(
+                    thread_executor.submit(
+                        self.__get_project_and_envs,
+                        projects,
+                        project,
+                        projects_slug,
+                        projects_envs
+                    )
+                )
+            finished_tasks, unfinished_tasks = concurrent.futures.wait(
+                __future_get_project_and_envs,
+                return_when=concurrent.futures.FIRST_EXCEPTION
+            )
+            for finished_task in finished_tasks:
+                err = finished_task.exception()
+                if err is not None:
+                    raise err
             log.info(
                 "metadata: projects loaded from API: {num_proj}".format(num_proj=len(projects))
             )
@@ -149,48 +238,27 @@ class SentryCollector(object):
 
             projects_issue_data = {}
 
+            __future_get_project_env_issue_metrics = set()
             for project in __metadata.get("projects"):
                 projects_issue_data[project.get("slug")] = {}
                 envs = __metadata.get("projects_envs").get(project.get("slug"))
                 for env in envs:
-                    project_issues_1h = project_issues_24h = project_issues_14d = {}
-                    if self.get_1h_metrics == "True":
-                        log.debug(
-                            "metadata: getting issues from api - project: {proj} env: {env} age: 1h".format(
-                                proj=project.get("slug"), env=env
-                            )
+                    __future_get_project_env_issue_metrics.add(
+                        thread_executor.submit(
+                            self.__get_project_env_issue_metrics,
+                            project,
+                            env,
+                            projects_issue_data
                         )
-                        project_issues_1h = self.__sentry_api.issues(
-                            self.org.get("slug"), project, env, age="1h"
-                        )
-                    if self.get_24h_metrics == "True":
-                        log.debug(
-                            "metadata: getting issues from api - project: {proj} env: {env} age: 24h".format(
-                                proj=project.get("slug"), env=env
-                            )
-                        )
-                        project_issues_24h = self.__sentry_api.issues(
-                            self.org.get("slug"), project, env, age="24h"
-                        )
-                    if self.get_14d_metrics == "True":
-                        log.debug(
-                            "metadata: getting issues from api - project: {proj} env: {env} age: 14d".format(
-                                proj=project.get("slug"), env=env
-                            )
-                        )
-                        project_issues_14d = self.__sentry_api.issues(
-                            self.org.get("slug"), project, env, age="14d"
-                        )
-
-                    log.debug("data structure: building projects issues data")
-                    for k, v in project_issues_1h.items():
-                        projects_issue_data[project.get("slug")][k] = {"1h": v}
-
-                    for k, v in project_issues_24h.items():
-                        projects_issue_data[project.get("slug")][k].update({"24h": v})
-
-                    for k, v in project_issues_14d.items():
-                        projects_issue_data[project.get("slug")][k].update({"14d": v})
+                    )
+            finished_tasks, unfinished_tasks = concurrent.futures.wait(
+                __future_get_project_env_issue_metrics,
+                return_when=concurrent.futures.FIRST_EXCEPTION
+            )
+            for finished_task in finished_tasks:
+                err = finished_task.exception()
+                if err is not None:
+                    raise err
 
             data["projects_data"] = projects_issue_data
 
@@ -198,23 +266,95 @@ class SentryCollector(object):
         log.debug("cache: writing data structure to file: {cache}".format(cache=JSON_CACHE_FILE))
         return data
 
-    def __build_sentry_data(self):
+    def __build_sentry_data(self, thread_executor=None):
+        assert thread_executor is not None
 
         data = get_cached(JSON_CACHE_FILE)
 
         if data is False:
             log.debug("cache: {cache} not found.".format(cache=JSON_CACHE_FILE))
             log.debug("cache: rebuilding from API...")
-            api_data = self.__build_sentry_data_from_api()
+            api_data = self.__build_sentry_data_from_api(thread_executor=thread_executor)
             return api_data
 
         log.debug("cache: reading data structure from file: {cache}".format(cache=JSON_CACHE_FILE))
         return data
 
+    def __get_rate_limit_second(self, project, project_rate_metrics):
+        rate_limit_second = self.__sentry_api.rate_limit(
+            self.org.get("slug"), project.get("slug")
+        )
+        project_rate_metrics.add_metric(
+            [str(project.get("slug"))], round(rate_limit_second, 6)
+        )
+
+    def __get_project_stats(self, project, project_events_metrics):
+        events = self.__sentry_api.project_stats(self.org.get("slug"), project.get("slug"))
+        for stat, value in events.items():
+            project_events_metrics.add_metric(
+                [
+                    str(project.get("slug")),
+                    str(stat),
+                ],
+                int(value),
+            )
+
+    def __get_issue_release(self, issue, env, issues_metrics):
+        release = self.__sentry_api.issue_release(issue.get("id"), env)
+        issues_metrics.add_metric(
+            [
+                str(issue.get("id")),
+                str(issue.get("logger")) or "None",
+                str(issue.get("level")),
+                str(issue.get("status")),
+                str(issue.get("platform")),
+                str(issue.get("project").get("slug")),
+                str(env),
+                str(release),
+                str(issue.get("isUnhandled")),
+                str(
+                    datetime.strftime(
+                        datetime.strptime(
+                            str(
+                                issue.get("firstSeen")
+                                # if the issue age is recent, firstSeen returns None
+                                # and we'll return datetime.now() as default
+                                or datetime.strftime(
+                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
+                                )
+                            ),
+                            "%Y-%m-%dT%H:%M:%SZ",
+                        ),
+                        "%Y-%m-%d",
+                    )
+                ),
+                str(
+                    datetime.strftime(
+                        datetime.strptime(
+                            str(
+                                issue.get("lastSeen")
+                                # if the issue age is recent, lastSeen returns None
+                                # and we'll return datetime.now() as default
+                                or datetime.strftime(
+                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
+                                )
+                            ),
+                            "%Y-%m-%dT%H:%M:%SZ",
+                        ),
+                        "%Y-%m-%d",
+                    )
+                ),
+            ],
+            int(issue.get("count")),
+        )
+
     def collect(self):
         """Yields metrics from the collectors in the registry."""
 
-        __data = self.__build_sentry_data()
+        # multithread processing so that we can collect metrics faster
+        # on organization that has many projects and issues.
+        __thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.max_collector_worker)
+        __data = self.__build_sentry_data(thread_executor=__thread_executor)
         __metadata = __data.get("metadata")
         __projects_data = __data.get("projects_data")
 
@@ -307,54 +447,24 @@ class SentryCollector(object):
                 project_issues = __projects_data.get(project.get("slug"))
                 for env in envs:
                     project_issues_1h = project_issues.get(env).get("1h")
+                    __future_get_issue_release = set()
                     for issue in project_issues_1h:
-                        release = self.__sentry_api.issue_release(issue.get("id"), env)
-                        issues_metrics.add_metric(
-                            [
-                                str(issue.get("id")),
-                                str(issue.get("logger")) or "None",
-                                str(issue.get("level")),
-                                str(issue.get("status")),
-                                str(issue.get("platform")),
-                                str(issue.get("project").get("slug")),
-                                str(env),
-                                str(release),
-                                str(issue.get("isUnhandled")),
-                                str(
-                                    datetime.strftime(
-                                        datetime.strptime(
-                                            str(
-                                                issue.get("firstSeen")
-                                                # if the issue age is recent, firstSeen returns None
-                                                # and we'll return datetime.now() as default
-                                                or datetime.strftime(
-                                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
-                                                )
-                                            ),
-                                            "%Y-%m-%dT%H:%M:%SZ",
-                                        ),
-                                        "%Y-%m-%d",
-                                    )
-                                ),
-                                str(
-                                    datetime.strftime(
-                                        datetime.strptime(
-                                            str(
-                                                issue.get("lastSeen")
-                                                # if the issue age is recent, lastSeen returns None
-                                                # and we'll return datetime.now() as default
-                                                or datetime.strftime(
-                                                    datetime.now(), "%Y-%m-%dT%H:%M:%SZ"
-                                                )
-                                            ),
-                                            "%Y-%m-%dT%H:%M:%SZ",
-                                        ),
-                                        "%Y-%m-%d",
-                                    )
-                                ),
-                            ],
-                            int(issue.get("count")),
+                        __future_get_issue_release.add(
+                            __thread_executor.submit(
+                                self.__get_issue_release,
+                                issue,
+                                env,
+                                issues_metrics,
+                            )
                         )
+                    finished_tasks, unfinished_tasks = concurrent.futures.wait(
+                        __future_get_issue_release,
+                        return_when=concurrent.futures.FIRST_EXCEPTION
+                    )
+                    for finished_task in finished_tasks:
+                        err = finished_task.exception()
+                        if err is not None:
+                            raise err
             yield issues_metrics
 
         if self.events_metrics == "True":
@@ -367,16 +477,23 @@ class SentryCollector(object):
                 ],
             )
 
+            __future_get_project_stats = set()
             for project in __metadata.get("projects"):
-                events = self.__sentry_api.project_stats(self.org.get("slug"), project.get("slug"))
-                for stat, value in events.items():
-                    project_events_metrics.add_metric(
-                        [
-                            str(project.get("slug")),
-                            str(stat),
-                        ],
-                        int(value),
+                __future_get_project_stats.add(
+                    __thread_executor.submit(
+                        self.__get_project_stats,
+                        project,
+                        project_events_metrics,
                     )
+                )
+            finished_tasks, unfinished_tasks = concurrent.futures.wait(
+                __future_get_project_stats,
+                return_when=concurrent.futures.FIRST_EXCEPTION
+            )
+            for finished_task in finished_tasks:
+                err = finished_task.exception()
+                if err is not None:
+                    raise err
 
             yield project_events_metrics
 
@@ -387,12 +504,22 @@ class SentryCollector(object):
                 labels=["project_slug"],
             )
 
+            __future_get_rate_limit_second = set()
             for project in __metadata.get("projects"):
-                rate_limit_second = self.__sentry_api.rate_limit(
-                    self.org.get("slug"), project.get("slug")
+                __future_get_rate_limit_second.add(
+                    __thread_executor.submit(
+                        self.__get_rate_limit_second,
+                        project,
+                        project_rate_metrics,
+                    )
                 )
-                project_rate_metrics.add_metric(
-                    [str(project.get("slug"))], round(rate_limit_second, 6)
-                )
+            finished_tasks, unfinished_tasks = concurrent.futures.wait(
+                __future_get_rate_limit_second,
+                return_when=concurrent.futures.FIRST_EXCEPTION
+            )
+            for finished_task in finished_tasks:
+                err = finished_task.exception()
+                if err is not None:
+                    raise err
 
             yield project_rate_metrics
