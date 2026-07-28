@@ -412,7 +412,7 @@ class SentryCollector(object):
                     if self.get_24h_metrics == "True":
                         histo_buckets.append(("24h", float(events_24h)))
                     if self.get_14d_metrics == "True":
-                        histo_buckets.append(("+Inf", float(events_14d)))
+                        histo_buckets.append(("14d", float(events_14d)))
                     issues_histogram_metrics.add_metric(
                         labels=[
                             str(project.get("slug")),
