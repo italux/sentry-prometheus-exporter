@@ -1,2 +1,2 @@
-remote_theme: pmarsceill/just-the-docs
+remote_theme: rundocs/jekyll-rtd-theme
 include: CONTRIBUTING.md

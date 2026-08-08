@@ -1,7 +1,16 @@
 from datetime import datetime
 from os import getenv
 
+from retry import retry
 import requests
+
+retry_settings = {
+    "tries": int(getenv("SENTRY_RETRY_TRIES", "3")),
+    "delay": float(getenv("SENTRY_RETRY_DELAY", "1")),
+    "max_delay": float(getenv("SENTRY_RETRY_MAX_DELAY", "10")),
+    "backoff": float(getenv("SENTRY_RETRY_BACKOFF", "2")),
+    "jitter": float(getenv("SENTRY_RETRY_JITTER", "0.5")),
+}
 
 
 class SentryAPI(object):
@@ -27,9 +36,12 @@ class SentryAPI(object):
         self.__token = auth_token
         self.__session = requests.Session()
 
+    @retry(requests.exceptions.HTTPError, **retry_settings)
     def __get(self, url):
         HEADERS = {"Authorization": "Bearer " + self.__token}
-        return self.__session.get(self.base_url + url, headers=HEADERS)
+        response = self.__session.get(self.base_url + url, headers=HEADERS)
+        response.raise_for_status()
+        return response
 
     def __post(self, url):
         raise NotImplementedError
@@ -81,14 +93,17 @@ class SentryAPI(object):
 
         return organization
 
-    def projects(self):
-        """Return a list of projects available to the authenticated session.
+    def projects(self, org_slug):
+        """Return a list of projects of the specified organization.
+
+        Args:
+            org_slug: A organization's slug string name.
 
         Returns:
             A list mapping with dictionary keys to the corresponding projects
         """
 
-        resp = self.__get("projects/")
+        resp = self.__get("organizations/{org}/projects/?all_projects=1".format(org=org_slug))
         projects = []
         for proj in resp.json():
             project = {}
@@ -149,7 +164,6 @@ class SentryAPI(object):
             A dict([list])
         """
 
-        events = 0
         first_day_month = datetime.timestamp(datetime.today().replace(day=1))
         today = datetime.timestamp(datetime.today())
         stat_names = ["received", "rejected", "blacklisted"]
@@ -169,6 +183,7 @@ class SentryAPI(object):
             stats[stat_name] = resp.json()
 
         for stat_name, values in stats.items():
+            events = 0
             for stat in values:
                 if type(stat) != str:
                     events += stat[1]
@@ -282,7 +297,7 @@ class SentryAPI(object):
             return {"all": resp.json()}
 
     def issue_events(self, issue_id, environment=None):
-        """This methid lists issue's events."""
+        """This method lists issue's events."""
 
         issue_events_url = "issues/{issue_id}/events/".format(issue_id=issue_id)
 
@@ -299,7 +314,7 @@ class SentryAPI(object):
             return {"all": resp.json()}
 
     def issue_release(self, issue_id, environment=None):
-        """This methid lists issue's events."""
+        """This method lists issue's events."""
 
         issue_release_url = "issues/{issue_id}/current-release/".format(issue_id=issue_id)
         issue_release_url = (
@@ -348,3 +363,27 @@ class SentryAPI(object):
         else:
             resp = self.__get(proj_releases_url)
             return {"all": resp.json()}
+
+    def rate_limit(self, org_slug, project_slug):
+        """Return client key rate limits configuration on an individual project.
+
+        Args:
+            org_slug: A organization's slug string name.
+            project_slug: The project's slug string name
+
+        Returns:
+            A dict corresponding of the project rate limit key
+        """
+
+        rate_limit_url = "projects/{org}/{proj_slug}/keys/".format(
+            org=org_slug, proj_slug=project_slug
+        )
+        resp = self.__get(rate_limit_url)
+        if resp.json()[0].get("rateLimit"):
+            rate_limit_window = resp.json()[0].get("rateLimit").get("window")
+            rate_limit_count = resp.json()[0].get("rateLimit").get("count")
+            rate_limit_second = rate_limit_count / rate_limit_window
+        else:
+            rate_limit_second = 0
+
+        return rate_limit_second
