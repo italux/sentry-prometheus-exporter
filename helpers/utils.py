@@ -5,6 +5,7 @@ from datetime import datetime
 from flask_healthz import HealthError
 from libs.sentry import SentryAPI
 from os import getenv
+import os
 
 # TODO - Move these settings to use Flask Ccnfiguration Handling
 # https://flask.palletsprojects.com/en/2.0.x/config/
@@ -28,7 +29,11 @@ def write_cache(filename, data, expire_timestamp=None):
 def get_cached(filename):
     """Validate if we already have a local token stored, if doesn't initiate the oauth workflow"""
     if os.path.isfile(filename):
-        cache = json.load(open(filename, "r"))
+        try:
+            cache = json.load(open(filename, "r"))
+        except json.decoder.JSONDecodeError:
+            os.remove(filename)
+            return False
         if cache.get("expire_at") <= datetime.timestamp(datetime.now()):
             log.debug("cache: expired data, removing cache file: {file}".format(file=filename))
             return False
