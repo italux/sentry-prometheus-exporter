@@ -7,11 +7,11 @@ from flask import Flask
 from flask_httpauth import HTTPBasicAuth
 from flask_healthz import healthz
 from prometheus_client import make_wsgi_app
-from prometheus_client.core import REGISTRY
+from prometheus_client.core import CollectorRegistry
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from helpers.prometheus import SentryCollector, clean_registry
+from helpers.prometheus import SentryCollector
 from libs.sentry import SentryAPI
 
 # TODO - Move these settings to use Flask Ccnfiguration Handling
@@ -34,6 +34,9 @@ logging.basicConfig(
     format="[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S %z",
 )
+
+registry = CollectorRegistry()
+current_collector = None
 
 app = Flask(__name__)
 app.register_blueprint(healthz, url_prefix="/healthz")
@@ -95,16 +98,20 @@ def home():
 @app.route("/metrics/")
 @auth.login_required(optional=basic_auth_is_enabled(EXPORTER_BASIC_AUTH))
 def sentry_exporter():
+    global current_collector
     sentry = SentryAPI(BASE_URL, AUTH_TOKEN)
-    log.info("exporter: cleaning registry collectors...")
-    clean_registry()
-    REGISTRY.register(SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG))
-    exporter = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app()})
+
+    if current_collector is not None:
+        log.info("exporter: cleaning registry collectors...")
+        registry.unregister(current_collector)
+
+    current_collector = SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG)
+    registry.register(current_collector)
+    exporter = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app(registry=registry)})
     return exporter
 
 
 if __name__ == "__main__":
-
     if not ORG_SLUG or not AUTH_TOKEN:
         log.error("ENVs: SENTRY_AUTH_TOKEN or SENTRY_EXPORTER_ORG was not found!")
         exit(1)
