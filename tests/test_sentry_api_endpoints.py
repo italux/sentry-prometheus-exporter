@@ -127,3 +127,38 @@ def test_issues_with_legacy_api_disabled_calls_organization_scoped_endpoint():
     responses.add(responses.GET, url, json=[])
     sentry_api.issues("acme", project)
     assert responses.calls[0].request.url == url
+
+
+@responses.activate
+def test_project_releases_calls_expected_endpoint(sentry_api):
+    # `project_releases(org_slug, project, environment=None)` -- project is a
+    # dict (not a slug string) and its "id" (not "slug") is used in the query.
+    project = {"slug": "backend", "id": "123"}
+    url = BASE_URL + "organizations/acme/releases/?project=123&sort=date"
+    responses.add(responses.GET, url, json=[])
+    sentry_api.project_releases("acme", project)
+    assert responses.calls[0].request.url == url
+
+
+@responses.activate
+def test_project_releases_with_environment_calls_expected_endpoint(sentry_api):
+    project = {"slug": "backend", "id": "123"}
+    url = BASE_URL + "organizations/acme/releases/?project=123&sort=date&environment=production"
+    responses.add(responses.GET, url, json=[])
+    sentry_api.project_releases("acme", project, environment="production")
+    assert responses.calls[0].request.url == url
+
+
+@responses.activate
+def test_rate_limit_calls_expected_endpoint(sentry_api):
+    # The brief refers to this as `keys(org_slug, proj_slug)`, but no such
+    # method exists -- the actual method is `rate_limit(org_slug, project_slug)`.
+    url = BASE_URL + "projects/acme/backend/keys/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[{"rateLimit": {"window": 7200, "count": 1000}}],
+    )
+    rate = sentry_api.rate_limit("acme", "backend")
+    assert responses.calls[0].request.url == url
+    assert rate == 1000 / 7200
