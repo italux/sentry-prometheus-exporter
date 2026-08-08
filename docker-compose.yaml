@@ -25,5 +25,6 @@ services:
     container_name: "sentry-prometheus-exporter-tests"
     build:
       context: .
-      target: audit-test
-    image: sentry-prometheus-exporter:audit-test
+      target: test
+    image: sentry-prometheus-exporter:test
+    command: pytest -v

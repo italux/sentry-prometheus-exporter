@@ -1,4 +1,4 @@
-FROM python:3.7-slim AS audit-test
+FROM python:3.7-slim AS test
 LABEL maintainer="Italo Santos <italux.santos@gmail.com>"
 LABEL description="Sentry Issues & Events Exporter - Test Environment"
 
@@ -17,7 +17,7 @@ COPY tests/ /app/tests/
 
 ENTRYPOINT ["pytest"]
 
-FROM python:3.7-slim
+FROM python:3.7-slim AS base
 LABEL maintainer="Italo Santos <italux.santos@gmail.com>"
 LABEL description="Sentry Issues & Events Exporter"
 
