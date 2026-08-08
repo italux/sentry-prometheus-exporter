@@ -52,3 +52,45 @@ def test_project_stats_calls_expected_endpoint(sentry_api):
             url.startswith(base) and "stat={0}".format(stat) in url and "since=" in url and "until=" in url
             for url in called_urls
         ), "expected a call for stat={0}, got: {1}".format(stat, called_urls)
+
+
+@responses.activate
+def test_issue_events_without_environment_calls_expected_endpoint(sentry_api):
+    url = BASE_URL + "issues/123/events/"
+    responses.add(responses.GET, url, json=[])
+    sentry_api.issue_events("123")
+    assert responses.calls[0].request.url == url
+
+
+@responses.activate
+def test_issue_events_with_environment_builds_valid_query_string(sentry_api):
+    url = BASE_URL + "issues/123/events/?environment=production&sort=date"
+    responses.add(responses.GET, url, json=[])
+    sentry_api.issue_events("123", environment="production")
+    assert responses.calls[0].request.url == url
+
+
+@responses.activate
+def test_issue_release_without_environment_calls_expected_endpoint(sentry_api):
+    url = BASE_URL + "issues/123/current-release/"
+    responses.add(
+        responses.GET,
+        url,
+        json={"currentRelease": {"release": {"version": "1.0.0"}}},
+    )
+    release = sentry_api.issue_release("123")
+    assert responses.calls[0].request.url == url
+    assert release == "1.0.0"
+
+
+@responses.activate
+def test_issue_release_with_environment_calls_expected_endpoint(sentry_api):
+    url = BASE_URL + "issues/123/current-release/?environment=production"
+    responses.add(
+        responses.GET,
+        url,
+        json={"currentRelease": {"release": {"version": "1.0.0"}}},
+    )
+    release = sentry_api.issue_release("123", environment="production")
+    assert responses.calls[0].request.url == url
+    assert release == "1.0.0"

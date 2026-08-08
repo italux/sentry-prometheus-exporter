@@ -303,7 +303,7 @@ class SentryAPI(object):
 
         if environment:
             issue_events = {}
-            issue_events_url = issue_events_url + "&environment={env}&sort=date".format(
+            issue_events_url = issue_events_url + "?environment={env}&sort=date".format(
                 env=environment
             )
             resp = self.__get(issue_events_url)
