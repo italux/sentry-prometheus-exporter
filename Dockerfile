@@ -1,3 +1,22 @@
+FROM python:3.7-slim AS audit-test
+LABEL maintainer="Italo Santos <italux.santos@gmail.com>"
+LABEL description="Sentry Issues & Events Exporter - Test Environment"
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+COPY helpers/ /app/helpers/
+COPY libs/ /app/libs/
+COPY exporter.py /app/
+COPY tests/ /app/tests/
+
+ENTRYPOINT ["pytest"]
+
 FROM python:3.7-slim
 LABEL maintainer="Italo Santos <italux.santos@gmail.com>"
 LABEL description="Sentry Issues & Events Exporter"

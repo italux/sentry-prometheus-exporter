@@ -21,3 +21,9 @@ services:
     ports:
       - "9790:9790"
     env_file: .env
+  tests:
+    container_name: "sentry-prometheus-exporter-tests"
+    build:
+      context: .
+      target: audit-test
+    image: sentry-prometheus-exporter:audit-test

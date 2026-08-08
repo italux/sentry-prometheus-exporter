@@ -17,6 +17,7 @@
   * [Install](#install)
   * [Run](#run)
   * [Docker](#docker)
+  * [Testing](#testing)
   * [Samples](#samples)
 * [Metrics](#metrics)
   * [Project Configuration](#project-configuration)
@@ -82,6 +83,34 @@ echo SENTRY_EXPORTER_ORG="[organization_slug]"
 
 ```sh
 docker-compose up -d
+```
+
+## Testing
+
+Tests are written using pytest and the responses library for mocking HTTP requests. To run tests locally:
+
+**Install development dependencies:**
+
+```sh
+pip install -r requirements-dev.txt
+```
+
+**Run tests:**
+
+```sh
+pytest -v
+```
+
+**Run tests in Docker:**
+
+```sh
+docker-compose run tests
+```
+
+**Collect tests without running:**
+
+```sh
+pytest --collect-only
 ```
 
 ## Metrics
