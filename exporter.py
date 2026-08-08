@@ -96,10 +96,14 @@ def home():
 @app.route("/metrics/")
 @auth.login_required(optional=basic_auth_is_enabled(EXPORTER_BASIC_AUTH))
 def sentry_exporter():
-    sentry = SentryAPI(BASE_URL, AUTH_TOKEN, use_legacy_api=(SENTRY_USE_LEGACY_API == "True"))
+    sentry = SentryAPI(
+        BASE_URL, AUTH_TOKEN, use_legacy_api=(SENTRY_USE_LEGACY_API == "True")
+    )
     log.info("exporter: cleaning registry collectors...")
     clean_registry()
-    REGISTRY.register(SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG))
+    REGISTRY.register(
+        SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG)
+    )
     exporter = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app()})
     return exporter
 
