@@ -17,6 +17,7 @@
   * [Install](#install)
   * [Run](#run)
   * [Docker](#docker)
+  * [Testing](#testing)
   * [Samples](#samples)
 * [Metrics](#metrics)
   * [Project Configuration](#project-configuration)
@@ -84,6 +85,34 @@ echo SENTRY_EXPORTER_ORG="[organization_slug]"
 docker-compose up -d
 ```
 
+## Testing
+
+Tests are written using pytest and the responses library for mocking HTTP requests. To run tests locally:
+
+**Install development dependencies:**
+
+```sh
+pip install -r requirements-dev.txt
+```
+
+**Run tests:**
+
+```sh
+pytest -v
+```
+
+**Run tests in Docker:**
+
+```sh
+docker-compose run tests
+```
+
+**Collect tests without running:**
+
+```sh
+pytest --collect-only
+```
+
 ## Metrics
 
 * `sentry_open_issue_events`: A Number of open issues (aka is:unresolved) per project in the past 1h
@@ -141,6 +170,16 @@ To enable the basic authentication mechanism on Sentry Prometheus Exporter you j
 Once enable, the `/metrics/` page will prompt `username` & `password` window
 
 <img src="samples/basic_auth.png" width="500">
+
+### API Configuration
+
+The Sentry API endpoint selection can be configured via the following environment variable:
+
+|  Environment variable              | Value type | Default value |                         Purpose                         |
+|:----------------------------------:|:----------:|:-------------:|:-------------------------------------------------------:|
+| `SENTRY_USE_LEGACY_API`            | Boolean    | True          | Use legacy project-scoped issues endpoint (set to False to use organization-scoped endpoint) |
+
+By default, the exporter uses Sentry's legacy project-scoped issues-listing endpoint. Setting `SENTRY_USE_LEGACY_API=False` switches to the newer organization-scoped endpoint, which is currently recommended by Sentry.
 
 #### Prometheus configuration
 

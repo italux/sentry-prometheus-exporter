@@ -29,10 +29,21 @@ class SentryAPI(object):
       [{'id': '7446', 'slug': 'loggi', 'name': 'loggi', 'status': 'active'}]
     """
 
-    def __init__(self, base_url, auth_token):
-        """Inits SentryAPI with base sentry's URL and authentication token."""
+    def __init__(self, base_url, auth_token, use_legacy_api=True):
+        """Inits SentryAPI with base sentry's URL and authentication token.
+
+        Args:
+            base_url: Sentry's API base URL.
+            auth_token: Authentication token used to authenticate requests.
+            use_legacy_api: Optional; defaults to True. When True, `issues()`
+                keeps calling the (now deprecated) project-scoped issues
+                endpoint, preserving today's exact URL/behavior. Set to False
+                to opt into the Organization Issues endpoint that Sentry's
+                docs say replaces it.
+        """
         super(SentryAPI, self).__init__()
         self.base_url = base_url
+        self.use_legacy_api = use_legacy_api
         self.__token = auth_token
         self.__session = requests.Session()
 
@@ -244,12 +255,24 @@ class SentryAPI(object):
         if not isinstance(project, dict):
             raise TypeError("project param isn't a dictionary")
 
-        issues_url = "projects/{org}/{proj_slug}/issues/?project={proj_id}&sort=date&query=age%3A-{age}".format(
-            org=org_slug,
-            proj_slug=project.get("slug"),
-            proj_id=project.get("id"),
-            age=age,
-        )
+        if self.use_legacy_api:
+            # Deprecated per Sentry's live docs (docs.sentry.io/api/events/list-a-projects-issues/):
+            # "This endpoint has been replaced with the Organization Issues endpoint
+            # which supports filtering on project and additional functionality."
+            # Kept as the default to avoid a breaking change; set use_legacy_api=False
+            # to opt into the replacement endpoint below.
+            issues_url = "projects/{org}/{proj_slug}/issues/?project={proj_id}&sort=date&query=age%3A-{age}".format(
+                org=org_slug,
+                proj_slug=project.get("slug"),
+                proj_id=project.get("id"),
+                age=age,
+            )
+        else:
+            issues_url = "organizations/{org}/issues/?project={proj_id}&sort=date&query=age%3A-{age}".format(
+                org=org_slug,
+                proj_id=project.get("id"),
+                age=age,
+            )
 
         if environment:
             issues = {}
@@ -305,7 +328,7 @@ class SentryAPI(object):
 
         if environment:
             issue_events = {}
-            issue_events_url = issue_events_url + "&environment={env}&sort=date".format(
+            issue_events_url = issue_events_url + "?environment={env}&sort=date".format(
                 env=environment
             )
             resp = self.__get(issue_events_url)

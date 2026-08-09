@@ -21,3 +21,10 @@ services:
     ports:
       - "9790:9790"
     env_file: .env
+  tests:
+    container_name: "sentry-prometheus-exporter-tests"
+    build:
+      context: .
+      target: test
+    image: sentry-prometheus-exporter:test
+    command: pytest -v

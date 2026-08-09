@@ -25,6 +25,7 @@ EXPORTER_BASIC_AUTH = getenv("SENTRY_EXPORTER_BASIC_AUTH") or "False"
 EXPORTER_BASIC_AUTH_USER = getenv("SENTRY_EXPORTER_BASIC_AUTH_USER") or "prometheus"
 EXPORTER_BASIC_AUTH_PASS = getenv("SENTRY_EXPORTER_BASIC_AUTH_PASS") or "prometheus"
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
+SENTRY_USE_LEGACY_API = getenv("SENTRY_USE_LEGACY_API", "True")
 
 log = logging.getLogger("exporter")
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
@@ -99,7 +100,7 @@ def home():
 @auth.login_required(optional=basic_auth_is_enabled(EXPORTER_BASIC_AUTH))
 def sentry_exporter():
     global current_collector
-    sentry = SentryAPI(BASE_URL, AUTH_TOKEN)
+    sentry = SentryAPI(BASE_URL, AUTH_TOKEN, use_legacy_api=(SENTRY_USE_LEGACY_API == "True"))
 
     if current_collector is not None:
         log.info("exporter: cleaning registry collectors...")

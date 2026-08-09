@@ -307,20 +307,24 @@ class SentryCollector(object):
                         first_seen = (
                             datetime.strptime(str(issue.get("firstSeen")), "%Y-%m-%dT%H:%M:%SZ")
                             if len(str(issue.get("firstSeen"))) == 20
-                            else datetime.strptime(
-                                str(issue.get("firstSeen")), "%Y-%m-%dT%H:%M:%S.%fZ"
+                            else (
+                                datetime.strptime(
+                                    str(issue.get("firstSeen")), "%Y-%m-%dT%H:%M:%S.%fZ"
+                                )
+                                if issue.get("firstSeen")
+                                else datetime.now()
                             )
-                            if issue.get("firstSeen")
-                            else datetime.now()
                         )
                         last_seen = (
                             datetime.strptime(str(issue.get("lastSeen")), "%Y-%m-%dT%H:%M:%SZ")
                             if len(str(issue.get("lastSeen"))) == 20
-                            else datetime.strptime(
-                                str(issue.get("lastSeen")), "%Y-%m-%dT%H:%M:%S.%fZ"
+                            else (
+                                datetime.strptime(
+                                    str(issue.get("lastSeen")), "%Y-%m-%dT%H:%M:%S.%fZ"
+                                )
+                                if issue.get("lastSeen")
+                                else datetime.now()
                             )
-                            if issue.get("lastSeen")
-                            else datetime.now()
                         )
                         issues_metrics.add_metric(
                             [
