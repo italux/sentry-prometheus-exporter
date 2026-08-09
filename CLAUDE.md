@@ -15,7 +15,7 @@ helpers/prometheus.py  SentryCollector — builds Prometheus metric families
 helpers/utils.py       JSON file cache (write_cache/get_cached) + healthz probes
 ```
 
-Request flow: `GET /metrics/` in `exporter.py` builds a fresh `SentryAPI`, clears the Prometheus `REGISTRY` (`clean_registry()`), registers a new `SentryCollector`, and delegates to `prometheus_client`'s WSGI app via `DispatcherMiddleware`. All the actual work happens lazily inside `SentryCollector.collect()`, which is called by `prometheus_client` when it renders the response — not by `exporter.py` directly.
+Request flow: `GET /metrics/` in `exporter.py` builds a fresh `SentryAPI`, unregisters the previously-registered collector from the module-level `registry` (a `CollectorRegistry` instance, tracked via the `current_collector` global) if one exists, registers a new `SentryCollector`, and delegates to `prometheus_client`'s WSGI app via `DispatcherMiddleware`. All the actual work happens lazily inside `SentryCollector.collect()`, which is called by `prometheus_client` when it renders the response — not by `exporter.py` directly.
 
 `SentryCollector` does not call `SentryAPI` on every scrape: it first checks `helpers.utils.get_cached()` for a live cache file and only calls the API (`__build_sentry_data_from_api`) on a cache miss/expiry. When it does hit the API, it also writes the result back to the cache file. Keep this in mind when debugging "stale metric" reports — the fix may be a cache TTL issue, not an API issue.
 
@@ -32,47 +32,30 @@ Request flow: `GET /metrics/` in `exporter.py` builds a fresh `SentryAPI`, clear
 
 ## Configuration
 
-Everything is env-var driven (see `exporter.py` top and `README.md`). Notable ones:
+Everything is env-var driven. See `README.md`'s "Project Configuration", "Metric Configuration", and "Basic Authentication" sections for the full variable reference (names, defaults, purpose) — don't duplicate that list here, keep it in sync in one place.
 
-- `SENTRY_BASE_URL` (default `https://sentry.io/api/0/`), `SENTRY_AUTH_TOKEN`, `SENTRY_EXPORTER_ORG` (required)
-- `SENTRY_EXPORTER_PROJECTS` — comma-separated slugs; omit to auto-discover all projects
-- `SENTRY_SCRAPE_ISSUE_METRICS` / `SENTRY_SCRAPE_EVENT_METRICS` / `SENTRY_SCRAPE_RATE_LIMIT_METRICS`
-- `SENTRY_ISSUES_1H` / `SENTRY_ISSUES_24H` / `SENTRY_ISSUES_14D`
-- `SENTRY_EXPORTER_BASIC_AUTH(_USER|_PASS)`
-- `SENTRY_RETRY_TRIES` / `_DELAY` / `_MAX_DELAY` / `_BACKOFF` / `_JITTER` (used by `libs/sentry.py`'s `@retry`)
-
-All of these are compared against the **string** `"True"`, not parsed as booleans — `SENTRY_SCRAPE_ISSUE_METRICS=false` (lowercase) will NOT disable the feature. Preserve this comparison style if you touch config parsing, or fix it repo-wide in one pass rather than mixing conventions.
+The one gotcha worth calling out because it's easy to get wrong and isn't spelled out in README: every one of those toggle vars is compared against the **string** `"True"`, not parsed as a real boolean — `SENTRY_SCRAPE_ISSUE_METRICS=false` (lowercase) will **not** disable the feature, it has to be exactly `"True"` or anything else counts as false. Preserve this comparison style if you touch config parsing, or fix it repo-wide in one pass rather than mixing conventions.
 
 ## Running locally
 
-```sh
-export SENTRY_BASE_URL="https://sentry.io/api/0/"
-export SENTRY_AUTH_TOKEN="[token]"
-export SENTRY_EXPORTER_ORG="[org-slug]"
-python exporter.py            # dev server, or:
-gunicorn -w 4 -b 0.0.0.0:9790 exporter:app   # prod-like, matches Dockerfile CMD
-```
+See `README.md`'s "Getting Started" section for the env vars, `python exporter.py`, and `docker-compose up -d` flows. The one thing worth adding here: the Dockerfile's actual `CMD` (and what you should run to match prod behavior locally) is gunicorn, not the Flask dev server:
 
 ```sh
-docker-compose up -d          # brings up prometheus + grafana + this exporter
+gunicorn -w 4 -b 0.0.0.0:9790 exporter:app
 ```
-
-`docker-compose.yaml` expects a local `.env` file (not committed) with the vars above.
 
 ## Testing
 
-**There is currently no `tests/` directory or test tooling on `master`.** CI (`.github/workflows/lint.yml`) only lints Python, and only runs lint — not tests:
-
-- `black -l 99 -t py37 --check .` (Black, line length 99, Python 3.7 target)
-
-If you add tests, match the pattern already prototyped on the `sentry-api-audit-plan` worktree/branch: `pytest` via `requirements-dev.txt`, a `tests/` package, and a dedicated `test` build stage in the Dockerfile (`FROM python:3.8-slim AS test`, installs both requirement files, `CMD ["pytest"]`) — do not just bolt pytest onto the existing `python:3.7-slim` runtime image. Note **3.7 vs 3.8**: the runtime image is pinned to `python:3.7-slim` while newer dev/test dependencies may require 3.8+; if you touch the Dockerfile, keep the runtime and test stages on the Python versions that actually satisfy each requirements file — don't assume they match.
-
-Before merging, actually run Black locally rather than relying on CI alone:
+**There is currently no `tests/` directory or test tooling on `master`.** CI (`.github/workflows/lint.yml`) only lints Python (Black), and only runs lint — not tests:
 
 ```sh
-pip install black==<version pinned by lgeiger/black-action@v1.0.1>
 black -l 99 -t py37 --check .
 ```
+
+If you add tests:
+
+- Don't bolt pytest onto the existing single-stage `python:3.7-slim` Dockerfile — give the test stage its own build stage and its own Python version (whatever `requirements-dev.txt` actually needs), independent of the runtime stage's 3.7 pin.
+- Run Black locally before pushing rather than relying on CI alone — install whatever version is pinned by the `lgeiger/black-action` step in `.github/workflows/lint.yml`, then `black -l 99 -t py37 --check .`.
 
 ## Sentry API surface (`libs/sentry.py`)
 
@@ -80,7 +63,7 @@ black -l 99 -t py37 --check .
 
 All GET requests share one private `__get()` with `@retry` (from the `retry` package) on `requests.exceptions.HTTPError`, configured via the `SENTRY_RETRY_*` env vars. `__post` is a stub (`raise NotImplementedError`) — this class is read-only by design; don't add mutating calls without discussing the retry/idempotency implications first.
 
-Sentry rate-limits to ~3 req/s. The exporter is **serial** (no concurrency) — for orgs with many projects/environments this can be slow enough to blow past Prometheus's scrape timeout. If you're asked to speed this up, prefer batching/async at the `SentryCollector` level over touching the retry logic.
+Sentry rate-limits to ~3 req/s, and the exporter has no concurrency (see "Known limitations" below) — for orgs with many projects/environments this combination can be slow enough to blow past Prometheus's scrape timeout.
 
 ## Code style
 
