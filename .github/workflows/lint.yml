@@ -23,7 +23,7 @@ jobs:
       - name: Black Code Formatter
         uses: lgeiger/black-action@v1.0.1
         with:
-          args: '. -l 99 -t py37 --check'
+          args: '. --check'
 
   yamllint:
     name: YAML Lint
