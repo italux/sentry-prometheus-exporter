@@ -100,21 +100,15 @@ def home():
 @auth.login_required(optional=basic_auth_is_enabled(EXPORTER_BASIC_AUTH))
 def sentry_exporter():
     global current_collector
-    sentry = SentryAPI(
-        BASE_URL, AUTH_TOKEN, use_legacy_api=(SENTRY_USE_LEGACY_API == "True")
-    )
+    sentry = SentryAPI(BASE_URL, AUTH_TOKEN, use_legacy_api=(SENTRY_USE_LEGACY_API == "True"))
 
     if current_collector is not None:
         log.info("exporter: cleaning registry collectors...")
         registry.unregister(current_collector)
 
-    current_collector = SentryCollector(
-        sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG
-    )
+    current_collector = SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG)
     registry.register(current_collector)
-    exporter = DispatcherMiddleware(
-        app.wsgi_app, {"/metrics": make_wsgi_app(registry=registry)}
-    )
+    exporter = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app(registry=registry)})
     return exporter
 
 

@@ -114,9 +114,7 @@ class SentryAPI(object):
             A list mapping with dictionary keys to the corresponding projects
         """
 
-        resp = self.__get(
-            "organizations/{org}/projects/?all_projects=1".format(org=org_slug)
-        )
+        resp = self.__get("organizations/{org}/projects/?all_projects=1".format(org=org_slug))
         projects = []
         for proj in resp.json():
             project = {}
@@ -310,10 +308,8 @@ class SentryAPI(object):
         if not isinstance(project, dict):
             raise TypeError("project param isn't a dictionary")
 
-        events_url = (
-            "projects/{org}/{proj_slug}/events/?project={proj_id}&sort=date".format(
-                org=org_slug, proj_slug=project.get("slug"), proj_id=project.get("id")
-            )
+        events_url = "projects/{org}/{proj_slug}/events/?project={proj_id}&sort=date".format(
+            org=org_slug, proj_slug=project.get("slug"), proj_id=project.get("id")
         )
         if environment:
             events = {}
@@ -345,9 +341,7 @@ class SentryAPI(object):
     def issue_release(self, issue_id, environment=None):
         """This method lists issue's events."""
 
-        issue_release_url = "issues/{issue_id}/current-release/".format(
-            issue_id=issue_id
-        )
+        issue_release_url = "issues/{issue_id}/current-release/".format(issue_id=issue_id)
         issue_release_url = (
             issue_release_url + "?environment={env}".format(env=environment)
             if environment
@@ -381,17 +375,13 @@ class SentryAPI(object):
         if not isinstance(project, dict):
             raise TypeError("project param isn't a dictionary")
 
-        proj_releases_url = (
-            "organizations/{org}/releases/?project={proj_id}&sort=date".format(
-                org=org_slug, proj_id=project.get("id")
-            )
+        proj_releases_url = "organizations/{org}/releases/?project={proj_id}&sort=date".format(
+            org=org_slug, proj_id=project.get("id")
         )
 
         if environment:
             proj_releases = {}
-            proj_releases_url = proj_releases_url + "&environment={env}".format(
-                env=environment
-            )
+            proj_releases_url = proj_releases_url + "&environment={env}".format(env=environment)
             resp = self.__get(proj_releases_url)
             proj_releases[environment] = resp.json()
             return proj_releases

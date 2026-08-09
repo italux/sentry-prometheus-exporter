@@ -114,10 +114,7 @@ def test_issues_calls_expected_endpoint(sentry_api):
     # dict (not a slug string), and the default use_legacy_api=True keeps the
     # project-scoped, now-deprecated endpoint's exact current URL shape.
     project = {"slug": "backend", "id": "123"}
-    url = (
-        BASE_URL
-        + "projects/acme/backend/issues/?project=123&sort=date&query=age%3A-24h"
-    )
+    url = BASE_URL + "projects/acme/backend/issues/?project=123&sort=date&query=age%3A-24h"
     responses.add(responses.GET, url, json=[])
     sentry_api.issues("acme", project)
     assert responses.calls[0].request.url == url
@@ -127,9 +124,7 @@ def test_issues_calls_expected_endpoint(sentry_api):
 def test_issues_with_legacy_api_disabled_calls_organization_scoped_endpoint():
     # Sentry's live docs mark the project-scoped issues endpoint deprecated in
     # favor of the Organization Issues endpoint. use_legacy_api=False opts in.
-    sentry_api = SentryAPI(
-        base_url=BASE_URL, auth_token="test-token", use_legacy_api=False
-    )
+    sentry_api = SentryAPI(base_url=BASE_URL, auth_token="test-token", use_legacy_api=False)
     project = {"slug": "backend", "id": "123"}
     url = BASE_URL + "organizations/acme/issues/?project=123&sort=date&query=age%3A-24h"
     responses.add(responses.GET, url, json=[])
@@ -151,10 +146,7 @@ def test_project_releases_calls_expected_endpoint(sentry_api):
 @responses.activate
 def test_project_releases_with_environment_calls_expected_endpoint(sentry_api):
     project = {"slug": "backend", "id": "123"}
-    url = (
-        BASE_URL
-        + "organizations/acme/releases/?project=123&sort=date&environment=production"
-    )
+    url = BASE_URL + "organizations/acme/releases/?project=123&sort=date&environment=production"
     responses.add(responses.GET, url, json=[])
     sentry_api.project_releases("acme", project, environment="production")
     assert responses.calls[0].request.url == url
