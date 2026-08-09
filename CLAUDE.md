@@ -90,10 +90,10 @@ vars above.
 ## Testing
 
 **There is currently no `tests/` directory or test tooling on `master`.**
-CI (`.github/workflows/`) only runs lint, not tests:
+CI (`.github/workflows/lint.yml`) only lints Python, and only runs lint —
+not tests:
 
 - `black -l 99 -t py37 --check .` (Black, line length 99, Python 3.7 target)
-- `yamllint` (`line-length: 99`, `truthy` rule disabled, indentation `consistent`)
 
 If you add tests, match the pattern already prototyped on the
 `sentry-api-audit-plan` worktree/branch: `pytest` via `requirements-dev.txt`,
@@ -106,8 +106,7 @@ touch the Dockerfile, keep the runtime and test stages on the Python
 versions that actually satisfy each requirements file — don't assume they
 match.
 
-Before merging, actually run black/yamllint locally rather than relying on
-CI alone:
+Before merging, actually run Black locally rather than relying on CI alone:
 
 ```sh
 pip install black==<version pinned by lgeiger/black-action@v1.0.1>
