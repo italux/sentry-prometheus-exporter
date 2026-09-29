@@ -120,6 +120,13 @@ pytest --collect-only
 * `sentry_events`: Total events counts per project
 * `sentry_rate_limit_events_sec`: Rate limit of errors per second accepted for a project.
 
+When `SENTRY_USE_STATS_V2=True` the exporter uses the organization-level `stats_v2` API instead (see [stats_v2 Configuration](#stats_v2-configuration)) and exposes:
+
+* `sentry_org_events_v2`: Event counts per project by category and outcome
+* `sentry_accepted_events`: Accepted events per project by category
+* `sentry_quota_exceeded`: Rate-limited (quota exceeded) events per project by category
+* `sentry_stats_v2_last_success_timestamp_seconds`: Unix timestamp of the last successful `stats_v2` fetch — alert on stale data with e.g. `time() - sentry_stats_v2_last_success_timestamp_seconds > 600`
+
 ### Project Configuration
 
 By default, sentry's API will be polled to retrieve all projects. If you wish for specific projects to be scraped, you can do the following:
@@ -180,6 +187,20 @@ The Sentry API endpoint selection can be configured via the following environmen
 | `SENTRY_USE_LEGACY_API`            | Boolean    | True          | Use legacy project-scoped issues endpoint (set to False to use organization-scoped endpoint) |
 
 By default, the exporter uses Sentry's legacy project-scoped issues-listing endpoint. Setting `SENTRY_USE_LEGACY_API=False` switches to the newer organization-scoped endpoint, which is currently recommended by Sentry.
+
+### stats_v2 Configuration
+
+The per-project collector issues several API calls per project and environment on every scrape, which gets slow for large organizations. The `stats_v2` collector fetches event counts for all projects with one [`stats_v2`](https://docs.sentry.io/api/organizations/retrieve-event-counts-for-an-organization-v2/) call per category and never calls Sentry on the scrape path: a background thread refreshes an in-memory cache and `/metrics/` is served from it. During a Sentry outage the last known values keep being served and `sentry_stats_v2_last_success_timestamp_seconds` stops advancing.
+
+|  Environment variable             | Value type | Default value |                         Purpose                          |
+|:---------------------------------:|:----------:|:-------------:|:--------------------------------------------------------:|
+| `SENTRY_USE_STATS_V2`             | Boolean    | False         | Use the `stats_v2` collector instead of the per-project collector |
+| `SENTRY_STATS_V2_CATEGORIES`      | String     | error         | Comma-separated data categories, e.g. `error,transaction,attachment` |
+| `SENTRY_STATS_V2_PERIOD`          | String     | 1d            | Stats period (`1d`, `7d`, `30d`, ...), ignored when `SENTRY_BILLING_CYCLE_DAY` is set |
+| `SENTRY_BILLING_CYCLE_DAY`        | Integer    | —             | Day of month your Sentry billing period starts; counts events from that day (UTC) until now, matching the quota shown in Sentry's usage page |
+| `SENTRY_REFRESH_INTERVAL_SECONDS` | Integer    | 60            | How often the background thread refreshes the cache |
+
+> Each gunicorn worker runs its own refresher thread, so API calls scale with `-w`. Two workers are plenty for this mode.
 
 #### Prometheus configuration
 
