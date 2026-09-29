@@ -165,3 +165,32 @@ def test_rate_limit_calls_expected_endpoint(sentry_api):
     rate = sentry_api.rate_limit("acme", "backend")
     assert responses.calls[0].request.url == url
     assert rate == 1000 / 7200
+
+
+@responses.activate
+def test_get_passes_request_timeout(sentry_api, monkeypatch):
+    import libs.sentry
+
+    captured = {}
+    original_get = sentry_api._SentryAPI__session.get
+
+    def spy_get(url, **kwargs):
+        captured.update(kwargs)
+        return original_get(url, **kwargs)
+
+    monkeypatch.setattr(sentry_api._SentryAPI__session, "get", spy_get)
+    responses.add(responses.GET, BASE_URL + "organizations/", json=[])
+    sentry_api.organizations()
+    assert captured.get("timeout") == libs.sentry.REQUEST_TIMEOUT
+
+
+@responses.activate
+def test_get_retries_on_timeout(sentry_api):
+    import requests
+
+    responses.add(
+        responses.GET, BASE_URL + "organizations/", body=requests.exceptions.ReadTimeout()
+    )
+    responses.add(responses.GET, BASE_URL + "organizations/", json=[])
+    assert sentry_api.organizations() == []
+    assert len(responses.calls) == 2
