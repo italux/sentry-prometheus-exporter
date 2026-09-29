@@ -224,6 +224,9 @@ scrape_configs:
   | `SENTRY_RETRY_MAX_DELAY` | Float      | 10            | Max delay to wait between retries                       |
   | `SENTRY_RETRY_BACKOFF`   | Float      | 2             | Multiplier applied to delay between attempts            |
   | `SENTRY_RETRY_JITTER`    | Float      | 0.5           | Extra seconds added to delay between attempts           |
+  | `SENTRY_REQUEST_TIMEOUT` | Float      | 30            | Seconds to wait for a Sentry API response before retrying |
+
+  Keep `SENTRY_REQUEST_TIMEOUT` × `SENTRY_RETRY_TRIES` (plus retry delays) below your Prometheus `scrape_timeout`.
 
 ### Recomendations & Tips
 

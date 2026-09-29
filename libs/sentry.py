@@ -12,6 +12,10 @@ retry_settings = {
     "jitter": float(getenv("SENTRY_RETRY_JITTER", "0.5")),
 }
 
+# Per-request timeout in seconds. Without it a stalled Sentry API connection hangs the
+# scrape indefinitely; keep it below the Prometheus scrape_timeout.
+REQUEST_TIMEOUT = float(getenv("SENTRY_REQUEST_TIMEOUT", "30"))
+
 
 class SentryAPI(object):
     """A simple :class:`SentryAPI <SentryAPI>` to interact with Sentry's Web API.
@@ -47,10 +51,12 @@ class SentryAPI(object):
         self.__token = auth_token
         self.__session = requests.Session()
 
-    @retry(requests.exceptions.HTTPError, **retry_settings)
+    @retry((requests.exceptions.HTTPError, requests.exceptions.Timeout), **retry_settings)
     def __get(self, url):
         HEADERS = {"Authorization": "Bearer " + self.__token}
-        response = self.__session.get(self.base_url + url, headers=HEADERS)
+        response = self.__session.get(
+            self.base_url + url, headers=HEADERS, timeout=REQUEST_TIMEOUT
+        )
         response.raise_for_status()
         return response
 
