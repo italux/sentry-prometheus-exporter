@@ -11,7 +11,7 @@ from prometheus_client.core import CollectorRegistry
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from helpers.prometheus import SentryCollector
+from helpers.prometheus import SentryCollector, SentryStatsV2Collector
 from libs.sentry import SentryAPI
 
 # TODO - Move these settings to use Flask Ccnfiguration Handling
@@ -26,6 +26,10 @@ EXPORTER_BASIC_AUTH_USER = getenv("SENTRY_EXPORTER_BASIC_AUTH_USER") or "prometh
 EXPORTER_BASIC_AUTH_PASS = getenv("SENTRY_EXPORTER_BASIC_AUTH_PASS") or "prometheus"
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
 SENTRY_USE_LEGACY_API = getenv("SENTRY_USE_LEGACY_API", "True")
+USE_STATS_V2 = getenv("SENTRY_USE_STATS_V2") or "False"
+STATS_V2_PERIOD = getenv("SENTRY_STATS_V2_PERIOD") or "1d"
+STATS_V2_CATEGORIES = getenv("SENTRY_STATS_V2_CATEGORIES") or "error"
+BILLING_CYCLE_DAY = getenv("SENTRY_BILLING_CYCLE_DAY")
 
 log = logging.getLogger("exporter")
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
@@ -89,6 +93,30 @@ def get_metric_config():
     ]
 
 
+def register_stats_v2_collector():
+    """Register the stats_v2 collector once per process and start its background refresher.
+
+    Unlike SentryCollector, it is not re-created per scrape: a daemon thread refreshes an
+    in-memory cache and collect() only reads it, so a slow Sentry API never blocks /metrics.
+    """
+    if not ORG_SLUG or not AUTH_TOKEN:
+        log.error("ENVs: SENTRY_AUTH_TOKEN or SENTRY_EXPORTER_ORG was not found!")
+        return
+
+    categories = [category.strip() for category in STATS_V2_CATEGORIES.split(",")]
+    billing_day = int(BILLING_CYCLE_DAY) if BILLING_CYCLE_DAY else None
+    log.info("exporter: registering SentryStatsV2Collector (categories: {})".format(categories))
+    collector = SentryStatsV2Collector(
+        SentryAPI(BASE_URL, AUTH_TOKEN), ORG_SLUG, STATS_V2_PERIOD, categories, billing_day
+    )
+    registry.register(collector)
+    collector.start_background_refresh()
+
+
+if USE_STATS_V2 == "True":
+    register_stats_v2_collector()
+
+
 @app.route("/")
 def home():
     return "<h1>Sentry Issues & Events Exporter</h1>\
@@ -100,14 +128,15 @@ def home():
 @auth.login_required(optional=basic_auth_is_enabled(EXPORTER_BASIC_AUTH))
 def sentry_exporter():
     global current_collector
-    sentry = SentryAPI(BASE_URL, AUTH_TOKEN, use_legacy_api=(SENTRY_USE_LEGACY_API == "True"))
+    if USE_STATS_V2 != "True":
+        sentry = SentryAPI(BASE_URL, AUTH_TOKEN, use_legacy_api=(SENTRY_USE_LEGACY_API == "True"))
 
-    if current_collector is not None:
-        log.info("exporter: cleaning registry collectors...")
-        registry.unregister(current_collector)
+        if current_collector is not None:
+            log.info("exporter: cleaning registry collectors...")
+            registry.unregister(current_collector)
 
-    current_collector = SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG)
-    registry.register(current_collector)
+        current_collector = SentryCollector(sentry, ORG_SLUG, get_metric_config(), PROJECTS_SLUG)
+        registry.register(current_collector)
     exporter = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app(registry=registry)})
     return exporter
 

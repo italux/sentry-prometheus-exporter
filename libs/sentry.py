@@ -412,3 +412,74 @@ class SentryAPI(object):
             rate_limit_second = 0
 
         return rate_limit_second
+
+    def org_stats_v2(
+        self, org_slug, stats_period="1d", categories=None, outcomes=None, start=None, end=None
+    ):
+        """Retrieve event counts for an organization using stats_v2 API.
+
+        This is a much more efficient endpoint that gets stats for all projects
+        in a single API call, instead of making individual calls per project.
+
+        Args:
+            org_slug: A organization's slug string name.
+            stats_period: Time period to retrieve stats for (e.g., "1d", "7d", "14d", "30d").
+                          Ignored if start/end are provided.
+            categories: List of categories to filter (default: ["error"])
+            outcomes: List of outcomes to filter (default: None, returns all outcomes)
+            start: Optional; ISO 8601 datetime string for the start of the period.
+                   When provided together with end, overrides stats_period.
+            end: Optional; ISO 8601 datetime string for the end of the period.
+
+        Returns:
+            A dict with the following structure:
+            {
+                "project_slug": {
+                    "accepted": count,
+                    "rate_limited": count,
+                    "filtered": count,
+                    "invalid": count,
+                    ...
+                }
+            }
+        """
+
+        if categories is None:
+            categories = ["error"]
+
+        if start and end:
+            stats_url = "organizations/{org}/stats_v2/?field=sum(quantity)&groupBy=project&groupBy=outcome&start={start}&end={end}".format(
+                org=org_slug, start=start, end=end
+            )
+        else:
+            stats_url = "organizations/{org}/stats_v2/?field=sum(quantity)&groupBy=project&groupBy=outcome&statsPeriod={period}".format(
+                org=org_slug, period=stats_period
+            )
+
+        for category in categories:
+            stats_url += "&category={cat}".format(cat=category)
+
+        if outcomes:
+            for outcome in outcomes:
+                stats_url += "&outcome={out}".format(out=outcome)
+
+        resp = self.__get(stats_url)
+        data = resp.json()
+
+        projects_list = self.projects(org_slug)
+        project_id_to_slug = {str(proj["id"]): proj["slug"] for proj in projects_list}
+
+        result = {}
+        for group in data.get("groups", []):
+            project_id = str(group.get("by", {}).get("project", ""))
+            outcome = group.get("by", {}).get("outcome", "unknown")
+            count = group.get("totals", {}).get("sum(quantity)", 0)
+
+            project_slug = project_id_to_slug.get(project_id, "unknown-{id}".format(id=project_id))
+
+            if project_slug not in result:
+                result[project_slug] = {}
+
+            result[project_slug][outcome] = count
+
+        return result
